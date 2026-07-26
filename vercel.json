@@ -3,7 +3,7 @@
   "outputDirectory": "frontend/dist",
   "builds": [
     {
-      "src": "backend/main.py",
+      "src": "api/index.py",
       "use": "@vercel/python"
     },
     {
@@ -14,7 +14,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/backend/main.py"
+      "dest": "/api/index.py"
     },
     { "handle": "filesystem" },
     {
