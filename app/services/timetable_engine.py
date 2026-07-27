@@ -216,17 +216,22 @@ class TimetableGenerator:
                         for p in day_periods:
                             var = self.assignments[(t, d, s_id, day, p)]
                             
-                            # Math preferably in first half
+                            s_name = s_info.get("name", "").lower()
+                            
+                            # Identify non-core subjects that should ideally be late in the day
+                            is_late_subject = any(kw in s_name for kw in ["game", "jal suraksha", "pe", "pt", "art", "craft", "music", "sport", "yoga", "we"]) or s_code in ["PE", "WE", "ART"]
+                            
+                            # Math preferably in first half (core subject)
                             if s_code == "MATH" and p < half_point:
                                 objective_terms.append(2 * var)
                             
-                            # PE and WE preferably in last 2 periods
-                            if s_code in ["PE", "WE"] and p >= total_p - 2:
-                                objective_terms.append(3 * var)
-                                
-                            # Art preferably after half point (after lunch generally)
-                            if s_code == "ART" and p >= half_point:
-                                objective_terms.append(2 * var)
+                            if is_late_subject:
+                                # Strong bonus for being in the last 4 periods
+                                if p >= max(0, total_p - 4):
+                                    objective_terms.append(5 * var)
+                                # Medium bonus just for being after the halfway point (post-lunch)
+                                elif p >= half_point:
+                                    objective_terms.append(2 * var)
                                 
                         # Double periods (consecutive) for science practicals or allowed subjects
                         if is_double:
