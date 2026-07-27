@@ -282,6 +282,11 @@ class TimetableGenerator:
         # Solve
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = 60.0
+        
+        # Make the solver non-deterministic so clicking 'generate' again produces a different timetable
+        import random
+        solver.parameters.random_seed = random.randint(1, 1000000)
+        
         status = solver.Solve(self.model)
         
         if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
