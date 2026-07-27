@@ -245,6 +245,37 @@ class TimetableGenerator:
                                 self.model.AddImplication(b_and, self.assignments[(t, d, s_id, day, p2)])
                                 objective_terms.append(4 * b_and)
 
+        # O3: Spread out "fun" subjects (Games, PE, Art, etc.) across different days
+        for d in {ts["division_id"] for ts in self.teacher_subjects}:
+            unique_days = list(set([day for day, p in self.schedule_config]))
+            for day in unique_days:
+                fun_vars_today = []
+                for ts in self.teacher_subjects:
+                    if ts["division_id"] != d: continue
+                    s_id = ts["subject_id"]
+                    
+                    # Find subject info
+                    s_info = next((s for s in self.subjects if s["id"] == s_id), {})
+                    s_name = s_info.get("name", "").lower()
+                    s_code = s_info.get("code", "").upper()
+                    
+                    # Check if it's a fun subject
+                    is_fun = any(kw in s_name for kw in ["game", "jal suraksha", "pe", "pt", "art", "craft", "music", "sport", "yoga", "we", "rsp"]) or s_code in ["PE", "WE", "ART", "RSP"]
+                    
+                    if is_fun:
+                        for p in [p for d_i, p in self.schedule_config if d_i == day]:
+                            fun_vars_today.append(self.assignments[(ts["teacher_id"], d, s_id, day, p)])
+                
+                if len(fun_vars_today) > 1:
+                    # Create a boolean that is True if AT LEAST ONE fun subject is assigned today
+                    has_fun_today = self.model.NewBoolVar(f"has_fun_d{d}_day{day}")
+                    self.model.AddMaxEquality(has_fun_today, fun_vars_today)
+                    
+                    # By rewarding the model for every day that has a fun subject, 
+                    # it naturally forces the solver to spread them out across multiple days 
+                    # rather than grouping them together on the same day!
+                    objective_terms.append(15 * has_fun_today)
+
         if objective_terms:
             self.model.Maximize(sum(objective_terms))
 
