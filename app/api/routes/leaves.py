@@ -165,3 +165,59 @@ def generate_arrangements(
             
     db.commit()
     return {"message": "Arrangements generated.", "substitutions_made": subs_made}
+
+@router.get("/")
+def get_leaves(
+    date: date,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    leave_datetime = datetime.combine(date, datetime.min.time())
+    leaves = db.query(TeacherLeave).filter(TeacherLeave.date == leave_datetime).all()
+    
+    return [
+        {
+            "id": l.id,
+            "teacher_id": l.teacher_id,
+            "teacher_name": l.teacher.user.full_name if l.teacher.user else l.teacher.employee_id,
+            "date": l.date.date(),
+            "leave_type": l.leave_type,
+            "reason": l.reason
+        }
+        for l in leaves
+    ]
+
+@router.delete("/{leave_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_leave(
+    leave_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles([RoleEnum.SUPER_ADMIN, RoleEnum.SCHOOL_ADMIN, RoleEnum.PRINCIPAL, RoleEnum.TIMETABLE_COORDINATOR]))
+):
+    leave = db.query(TeacherLeave).filter(TeacherLeave.id == leave_id).first()
+    if not leave:
+        raise HTTPException(status_code=404, detail="Leave not found")
+        
+    db.delete(leave)
+    db.commit()
+    return None
+
+@router.get("/arrangements")
+def get_arrangements(
+    date: date,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    leave_datetime = datetime.combine(date, datetime.min.time())
+    subs = db.query(Substitution).filter(Substitution.date == leave_datetime).all()
+    
+    return [
+        {
+            "id": sub.id,
+            "substitute_teacher_name": sub.substitute_teacher.user.full_name if sub.substitute_teacher.user else sub.substitute_teacher.employee_id,
+            "original_teacher_name": sub.original_slot.teacher.user.full_name if sub.original_slot.teacher.user else sub.original_slot.teacher.employee_id,
+            "division_name": f"{sub.original_slot.division.school_class.name}-{sub.original_slot.division.name}",
+            "subject_name": sub.original_slot.subject.name,
+            "period": sub.original_slot.period_number
+        }
+        for sub in subs
+    ]

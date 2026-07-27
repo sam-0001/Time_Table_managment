@@ -32,3 +32,36 @@ export function useGenerateArrangements() {
     },
   });
 }
+
+export function useLeaves(date: string) {
+  return useQuery({
+    queryKey: ['leaves', date],
+    queryFn: async () => {
+      const { data } = await api.get(`/leaves/?date=${date}`);
+      return data;
+    },
+  });
+}
+
+export function useArrangements(date: string) {
+  return useQuery({
+    queryKey: ['arrangements', date],
+    queryFn: async () => {
+      const { data } = await api.get(`/leaves/arrangements?date=${date}`);
+      return data;
+    },
+  });
+}
+
+export function useDeleteLeave() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (leave_id: string) => {
+      await api.delete(`/leaves/${leave_id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leaves'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard_metrics'] });
+    },
+  });
+}
