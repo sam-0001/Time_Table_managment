@@ -178,7 +178,7 @@ export default function TeachersPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Employee ID</label>
-                  <Input required disabled={!!editingId} value={formData.employee_id} onChange={e => setFormData({...formData, employee_id: e.target.value})} placeholder="e.g. EMP100" />
+                  <Input disabled={!!editingId} value={formData.employee_id} onChange={e => setFormData({...formData, employee_id: e.target.value})} placeholder="Auto-generated if empty" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">

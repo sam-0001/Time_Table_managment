@@ -15,7 +15,7 @@ class TeacherAssignmentSchema(BaseModel):
 class TeacherCreate(BaseModel):
     name: str
     email: str | None = None
-    employee_id: str
+    employee_id: str | None = None
     mobile: str | None = None
     qualification: str | None = None
     assignments: List[TeacherAssignmentSchema] = []
@@ -59,6 +59,13 @@ def create_teacher(
     db: Session = Depends(get_db), 
     current_user: User = Depends(require_roles([RoleEnum.SUPER_ADMIN, RoleEnum.SCHOOL_ADMIN, RoleEnum.PRINCIPAL]))
 ):
+    if not teacher_in.employee_id:
+        max_id = 0
+        for t in db.query(Teacher.employee_id).all():
+            if t[0] and t[0].isdigit():
+                max_id = max(max_id, int(t[0]))
+        teacher_in.employee_id = str(max_id + 1)
+        
     teacher = db.query(Teacher).filter(Teacher.employee_id == teacher_in.employee_id).first()
     if teacher:
         raise HTTPException(status_code=400, detail="Teacher with this Employee ID already exists.")
