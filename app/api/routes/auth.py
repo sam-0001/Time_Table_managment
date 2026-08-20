@@ -80,7 +80,8 @@ def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
     
     # In a real application, you would send an email here.
     # For now, we will print it to the server console.
-    print(f"!!! OTP for {req.email} is: {otp} !!!")
+    from app.core.email import send_otp_email
+    send_otp_email(req.email, otp)
     
     otp_record = OTPCode(email=req.email, otp=otp, expires_at=expires)
     db.add(otp_record)
