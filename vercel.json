@@ -1,6 +1,7 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "frontend/dist",
+  "regions": ["bom1"],
   "builds": [
     {
       "src": "api/index.py",
