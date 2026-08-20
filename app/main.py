@@ -32,6 +32,20 @@ app.include_router(timetable.router, prefix="/api/timetable", tags=["timetable"]
 app.include_router(leaves.router, prefix="/api/leaves", tags=["leaves"])
 app.include_router(import_export.router, prefix="/api/import-export", tags=["import-export"])
 
+from sqlalchemy import text
+from app.db.database import SessionLocal
+
+@app.get("/api/health")
+def health_check():
+    try:
+        # Query the database to keep Supabase active
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+        return {"status": "ok", "message": "Database is active"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the School Timetable Management System API"}

@@ -66,7 +66,11 @@ def create_teacher(
     email_to_use = teacher_in.email if teacher_in.email else f"{teacher_in.employee_id.lower()}@school.edu"
     
     user = db.query(User).filter(User.email == email_to_use).first()
-    if not user:
+    if user:
+        existing_teacher_for_user = db.query(Teacher).filter(Teacher.user_id == user.id).first()
+        if existing_teacher_for_user:
+            raise HTTPException(status_code=400, detail="A teacher with this email already exists.")
+    else:
         from app.core.security import get_password_hash
         user = User(
             email=email_to_use,
@@ -216,7 +220,12 @@ def update_teacher(
         if teacher_in.name is not None:
             user.full_name = teacher_in.name
         if teacher_in.email is not None:
-            user.email = teacher_in.email if teacher_in.email else f"{t.employee_id.lower()}@school.edu"
+            new_email = teacher_in.email if teacher_in.email else f"{t.employee_id.lower()}@school.edu"
+            if new_email != user.email:
+                existing_user = db.query(User).filter(User.email == new_email).first()
+                if existing_user:
+                    raise HTTPException(status_code=400, detail="Email is already in use by another user.")
+            user.email = new_email
         db.add(user)
         
     db.commit()
