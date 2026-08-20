@@ -87,17 +87,25 @@ class TimetableGenerator:
                         for ts in self.teacher_subjects if ts["division_id"] == d) <= 1
                 )
                     
-        # C4: Maximum daily periods per teacher (Auto-calculated as total periods - 1)
+        # C4: Maximum daily periods per teacher
         for t_info in self.teachers:
             t = t_info["id"]
             
+            # Find the total required periods for this teacher to ensure we don't over-constrain
+            total_required = sum(ts["weekly_periods"] for ts in self.teacher_subjects if ts["teacher_id"] == t)
+            
             unique_days = list(set([day for day, p in self.schedule_config]))
+            active_days = len(unique_days)
+            
             for day in unique_days:
                 day_periods = [p for d_i, p in self.schedule_config if d_i == day]
                 periods_today = len(day_periods)
                 
-                # Rule: Max daily is ALWAYS one less than total periods today, but respect individual teacher limits if lower
+                # Rule: max_daily normally respects teacher preference or total periods-1
+                # But if they MUST teach more to hit their weekly requirement, relax it!
+                min_daily_needed = (total_required // active_days) if active_days else 0
                 max_daily = min(t_info.get("max_daily", 7), max(0, periods_today - 1))
+                max_daily = max(max_daily, min_daily_needed + 1)
                 
                 self.model.Add(
                     sum(self.assignments[(ts["teacher_id"], ts["division_id"], ts["subject_id"], day, p)]
@@ -105,10 +113,12 @@ class TimetableGenerator:
                         for day_i, p in self.schedule_config if day_i == day) <= max_daily
                 )
 
-        # C5: Teacher workload balancing (Respect teacher's max_weekly with a +2 tolerance)
+        # C5: Teacher workload balancing
         for t_info in self.teachers:
             t = t_info["id"]
-            max_weekly = t_info.get("max_weekly", self.global_max_weekly) + 2
+            
+            total_required = sum(ts["weekly_periods"] for ts in self.teacher_subjects if ts["teacher_id"] == t)
+            max_weekly = max(t_info.get("max_weekly", self.global_max_weekly) + 2, total_required)
             
             total_assigned = sum(
                 self.assignments[(ts["teacher_id"], ts["division_id"], ts["subject_id"], day, p)]
