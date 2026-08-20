@@ -1,66 +1,60 @@
-import os
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
 
-sqlite_url = "sqlite:///./sql_app.db"
-postgres_url = "postgresql://postgres:TimeTable#1100@db.ujdutvrmljeoczzelprd.supabase.co:5432/postgres"
+SQLITE_URL = "sqlite:///./sql_app.db"
+POSTGRES_URL = "postgresql://postgres:TimeTable#1100@db.lxczvmpobvblymkuukim.supabase.co:5432/postgres"
 
-# Engines
-sqlite_engine = create_engine(sqlite_url)
-postgres_engine = create_engine(postgres_url)
+sqlite_engine = create_engine(SQLITE_URL)
+postgres_engine = create_engine(POSTGRES_URL)
 
-# Reflect metadata from both
 sqlite_meta = MetaData()
 sqlite_meta.reflect(bind=sqlite_engine)
 
 postgres_meta = MetaData()
 postgres_meta.reflect(bind=postgres_engine)
 
+SqliteSession = sessionmaker(bind=sqlite_engine)
+PostgresSession = sessionmaker(bind=postgres_engine)
+
 tables = [
-    "users",
-    "school_settings",
-    "teachers",
-    "classes",
-    "divisions",
-    "subjects",
-    "teacher_subjects",
-    "timetable_slots",
-    "teacher_leaves"
+    "users", "schools", "academic_years", "school_settings",
+    "classes", "classrooms", "teachers", "divisions",
+    "subjects", "teacher_subjects", "timetable_slots",
+    "teacher_leaves", "substitutions", "audit_logs"
 ]
 
-from sqlalchemy import create_engine, MetaData, text
+def migrate_data():
+    sqlite_session = SqliteSession()
+    postgres_session = PostgresSession()
 
-with postgres_engine.connect() as pg_conn:
-    # Disable foreign key checks temporarily in Postgres
     try:
-        pg_conn.execute(text("SET session_replication_role = 'replica';"))
+        for table_name in tables:
+            if table_name not in sqlite_meta.tables:
+                continue
+            
+            print(f"Migrating {table_name}...")
+            sqlite_table = sqlite_meta.tables[table_name]
+            postgres_table = postgres_meta.tables[table_name]
+
+            postgres_session.execute(postgres_table.delete())
+
+            rows = sqlite_session.execute(sqlite_table.select()).fetchall()
+            
+            if rows:
+                dicts = [dict(row._mapping) for row in rows]
+                postgres_session.execute(postgres_table.insert(), dicts)
+                print(f"  Inserted {len(rows)} records into {table_name}.")
+            else:
+                print(f"  No records found for {table_name}.")
+        
+        postgres_session.commit()
+        print("Migration complete!")
     except Exception as e:
-        print(f"Could not set replication role: {e}")
-        pass
+        postgres_session.rollback()
+        print(f"An error occurred: {e}")
+    finally:
+        sqlite_session.close()
+        postgres_session.close()
 
-    for table_name in tables:
-        if table_name not in sqlite_meta.tables:
-            continue
-            
-        print(f"Migrating {table_name}...")
-        sqlite_table = sqlite_meta.tables[table_name]
-        postgres_table = postgres_meta.tables[table_name]
-        
-        # Read from SQLite
-        with sqlite_engine.connect() as sq_conn:
-            result = sq_conn.execute(sqlite_table.select())
-            rows = [dict(row._mapping) for row in result]
-            
-        if rows:
-            # Delete existing in Postgres just in case
-            pg_conn.execute(postgres_table.delete())
-            # Insert into Postgres
-            pg_conn.execute(postgres_table.insert(), rows)
-            print(f" -> Inserted {len(rows)} rows into {table_name}")
-            
-    try:
-        pg_conn.execute("SET session_replication_role = 'origin';")
-    except Exception:
-        pass
-        
-print("Migration completed successfully!")
+if __name__ == "__main__":
+    migrate_data()

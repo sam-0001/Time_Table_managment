@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import React, { useState, useRef } from 'react'
 import { useSubjects } from '@/hooks/useSubjects'
 import { useTeachers, useCreateTeacher, useDeleteTeacher, useUpdateTeacher } from '@/hooks/useTeachers'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -396,8 +396,8 @@ export default function TeachersPage() {
                     <p className="text-sm font-semibold text-purple-900 dark:text-purple-300">Class Teacher</p>
                     <p className="text-sm text-purple-700 dark:text-purple-400">
                       {(() => {
-                        const div = classes?.flatMap(c => c.divisions).find(d => d.id === viewingTeacher.class_teacher_of_division_id);
-                        const cls = classes?.find(c => c.divisions.some(d => d.id === viewingTeacher.class_teacher_of_division_id));
+                        const div = classes?.flatMap((c: any) => c.divisions).find((d: any) => d.id === viewingTeacher.class_teacher_of_division_id);
+                        const cls = classes?.find((c: any) => c.divisions.some((d: any) => d.id === viewingTeacher.class_teacher_of_division_id));
                         return cls && div ? `Std ${cls.name} - Div ${div.name}` : 'Unknown Class';
                       })()}
                     </p>
@@ -414,9 +414,9 @@ export default function TeachersPage() {
                 {viewingTeacher.assignments && viewingTeacher.assignments.length > 0 ? (
                   <div className="grid gap-2">
                     {viewingTeacher.assignments.map((assign: any, idx: number) => {
-                      const subject = subjects?.find(s => s.id === assign.subject_id);
-                      const cls = classes?.find(c => c.id === subject?.class_id);
-                      const div = cls?.divisions.find(d => d.id === assign.division_id);
+                      const subject = subjects?.find((s: any) => s.id === assign.subject_id);
+                      const cls = classes?.find((c: any) => c.id === subject?.class_id);
+                      const div = cls?.divisions.find((d: any) => d.id === assign.division_id);
                       return (
                         <div key={idx} className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded border border-slate-100 dark:border-slate-800 flex justify-between items-center">
                           <div>
@@ -438,7 +438,7 @@ export default function TeachersPage() {
               <div className="grid grid-cols-2 gap-4 pt-2 border-t">
                 {(() => {
                   const totalAssignedPeriods = viewingTeacher.assignments?.reduce((sum: number, assign: any) => {
-                    const subject = subjects?.find(s => s.id === assign.subject_id);
+                    const subject = subjects?.find((s: any) => s.id === assign.subject_id);
                     return sum + (subject?.weekly_periods || 0);
                   }, 0) || 0;
                   const remainingPeriods = viewingTeacher.max_weekly_periods - totalAssignedPeriods;
