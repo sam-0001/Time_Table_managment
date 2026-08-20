@@ -55,7 +55,7 @@ class AcademicYearCreate(BaseModel):
 
 @router.post("/setup", status_code=status.HTTP_201_CREATED)
 def setup_school(school_in: SchoolCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    existing = db.query(School).first()
+    existing = db.query(School).filter(School.id == current_user.school_id).first()
     if existing:
         raise HTTPException(status_code=400, detail="School is already set up.")
         
@@ -94,7 +94,7 @@ def setup_school(school_in: SchoolCreate, db: Session = Depends(get_db), current
 
 @router.post("/academic-year", status_code=status.HTTP_201_CREATED)
 def create_academic_year(year_in: AcademicYearCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    school = db.query(School).first()
+    school = db.query(School).filter(School.id == current_user.school_id).first()
     if not school:
         raise HTTPException(status_code=400, detail="School not set up.")
         
@@ -111,10 +111,10 @@ def create_academic_year(year_in: AcademicYearCreate, db: Session = Depends(get_
 
 @router.get("/settings")
 def get_school_settings(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    settings = db.query(SchoolSetting).first()
+    settings = db.query(SchoolSetting).filter(SchoolSetting.school_id == current_user.school_id).first()
     if not settings:
         # Fallback: Create default school and settings if missing
-        school = db.query(School).first()
+        school = db.query(School).filter(School.id == current_user.school_id).first()
         if not school:
             school = School(name="My School", code="SCH", address="", city="", state="", pincode="", phone="", email="", website="", board="", medium="")
             db.add(school)
@@ -139,7 +139,7 @@ def get_school_settings(db: Session = Depends(get_db), current_user: User = Depe
 
 @router.put("/settings")
 def update_school_settings(settings_in: SchoolSettingsUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    settings = db.query(SchoolSetting).first()
+    settings = db.query(SchoolSetting).filter(SchoolSetting.school_id == current_user.school_id).first()
     if not settings:
         raise HTTPException(status_code=404, detail="Settings not found")
     

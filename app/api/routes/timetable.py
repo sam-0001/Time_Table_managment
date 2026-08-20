@@ -15,11 +15,11 @@ def generate_timetable(
     current_user: User = Depends(require_roles([RoleEnum.SUPER_ADMIN, RoleEnum.SCHOOL_ADMIN, RoleEnum.PRINCIPAL, RoleEnum.TIMETABLE_COORDINATOR]))
 ):
     # 1. Fetch constraints and data
-    school_setting = db.query(SchoolSetting).first()
+    school_setting = db.query(SchoolSetting).filter(SchoolSetting.school_id == current_user.school_id).first()
     if not school_setting:
         raise HTTPException(status_code=400, detail="School settings not found")
         
-    teachers_db = db.query(Teacher).filter(Teacher.is_active == True).all()
+    teachers_db = db.query(Teacher).filter(Teacher.school_id == current_user.school_id, Teacher.is_active == True).all()
     teachers = [
         {
             "id": t.id,
@@ -70,7 +70,7 @@ def generate_timetable(
     result = generator.generate()
     if result["status"] == "SUCCESS":
         # Clear old slots for this academic year
-        db.query(TimetableSlot).filter(
+        db.query(TimetableSlot).join(Teacher).filter(Teacher.school_id == current_user.school_id, 
             TimetableSlot.division_id.in_([d["id"] for d in divisions])
         ).delete(synchronize_session=False)
         db.commit()
@@ -97,7 +97,7 @@ def get_timetable(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    slots = db.query(TimetableSlot).join(Division).join(SchoolClass).filter(
+    slots = db.query(TimetableSlot).join(Teacher).join(Division).join(SchoolClass).filter(Teacher.school_id == current_user.school_id, 
         SchoolClass.academic_year_id == academic_year_id
     ).all()
     

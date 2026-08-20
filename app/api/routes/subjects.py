@@ -36,7 +36,7 @@ def create_subject(
     db: Session = Depends(get_db), 
     current_user: User = Depends(require_roles([RoleEnum.SUPER_ADMIN, RoleEnum.SCHOOL_ADMIN, RoleEnum.PRINCIPAL, RoleEnum.TIMETABLE_COORDINATOR]))
 ):
-    subject = db.query(Subject).filter(Subject.code == subject_in.code, Subject.class_id == subject_in.class_id).first()
+    subject = db.query(Subject).join(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id, Subject.code == subject_in.code, Subject.class_id == subject_in.class_id).first()
     if subject:
         raise HTTPException(status_code=400, detail="Subject with this code already exists for the class.")
         
@@ -66,7 +66,7 @@ def get_subjects(
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
-    query = db.query(Subject)
+    query = db.query(Subject).join(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id)
     if class_id:
         query = query.filter(Subject.class_id == class_id)
     if search:
@@ -80,12 +80,12 @@ def update_subject(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles([RoleEnum.SUPER_ADMIN, RoleEnum.SCHOOL_ADMIN, RoleEnum.PRINCIPAL]))
 ):
-    subject = db.query(Subject).filter(Subject.id == id).first()
+    subject = db.query(Subject).join(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id, Subject.id == id).first()
     if not subject:
         raise HTTPException(status_code=404, detail="Subject not found")
         
     if subject_in.code:
-        existing_subject = db.query(Subject).filter(Subject.code == subject_in.code, Subject.class_id == subject.class_id, Subject.id != id).first()
+        existing_subject = db.query(Subject).join(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id, Subject.code == subject_in.code, Subject.class_id == subject.class_id, Subject.id != id).first()
         if existing_subject:
             raise HTTPException(status_code=400, detail="Subject with this code already exists for the class.")
 
@@ -107,7 +107,7 @@ def delete_subject(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles([RoleEnum.SUPER_ADMIN, RoleEnum.SCHOOL_ADMIN]))
 ):
-    subject = db.query(Subject).filter(Subject.id == id).first()
+    subject = db.query(Subject).join(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id, Subject.id == id).first()
     if not subject:
         raise HTTPException(status_code=404, detail="Subject not found")
     

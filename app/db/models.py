@@ -23,9 +23,11 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    school_id = Column(String, ForeignKey("schools.id", ondelete="CASCADE"), nullable=True)
 
     # Relationships
     teacher_profile = relationship("Teacher", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    school = relationship("School", back_populates="users")
 
 class School(Base):
     __tablename__ = "schools"
@@ -45,6 +47,9 @@ class School(Base):
     # Relationships
     academic_years = relationship("AcademicYear", back_populates="school", cascade="all, delete-orphan")
     settings = relationship("SchoolSetting", back_populates="school", uselist=False, cascade="all, delete-orphan")
+    users = relationship("User", back_populates="school", cascade="all, delete-orphan")
+    teachers = relationship("Teacher", back_populates="school", cascade="all, delete-orphan")
+    classrooms = relationship("Classroom", back_populates="school", cascade="all, delete-orphan")
 
 class SchoolSetting(Base):
     __tablename__ = "school_settings"
@@ -98,6 +103,7 @@ class Teacher(Base):
     max_daily_periods = Column(Integer, default=7)
     max_weekly_periods = Column(Integer, default=32)
     is_active = Column(Boolean, default=True)
+    school_id = Column(String, ForeignKey("schools.id", ondelete="CASCADE"), nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="teacher_profile")
@@ -105,6 +111,7 @@ class Teacher(Base):
     subjects = relationship("TeacherSubject", back_populates="teacher", cascade="all, delete-orphan")
     leaves = relationship("TeacherLeave", back_populates="teacher", cascade="all, delete-orphan")
     slots = relationship("TimetableSlot", back_populates="teacher", cascade="all, delete-orphan")
+    school = relationship("School", back_populates="teachers")
 
 class SchoolClass(Base):
     __tablename__ = "classes"
@@ -138,8 +145,10 @@ class Classroom(Base):
     name = Column(String, nullable=False) # e.g. "Room 101"
     capacity = Column(Integer, default=40)
     is_lab = Column(Boolean, default=False)
+    school_id = Column(String, ForeignKey("schools.id", ondelete="CASCADE"), nullable=True)
     
     divisions = relationship("Division", back_populates="classroom")
+    school = relationship("School", back_populates="classrooms")
 
 class Subject(Base):
     __tablename__ = "subjects"

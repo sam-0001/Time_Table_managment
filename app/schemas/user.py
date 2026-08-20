@@ -10,6 +10,12 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+class SchoolRegisterCreate(BaseModel):
+    school_name: str
+    email: EmailStr
+    password: str
+    full_name: str
+    
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     full_name: Optional[str] = None

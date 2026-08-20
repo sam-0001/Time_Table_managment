@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.db.database import get_db
-from app.db.models import SchoolClass, Division, User, RoleEnum
+from app.db.models import SchoolClass, Division, User, RoleEnum, AcademicYear
 from app.api.deps import get_current_user, require_roles
 from pydantic import BaseModel
 
@@ -42,7 +42,7 @@ def create_class(
     db: Session = Depends(get_db), 
     current_user: User = Depends(require_roles([RoleEnum.SUPER_ADMIN, RoleEnum.SCHOOL_ADMIN, RoleEnum.PRINCIPAL]))
 ):
-    school_class = db.query(SchoolClass).filter(
+    school_class = db.query(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id, 
         SchoolClass.name == class_in.name, 
         SchoolClass.academic_year_id == class_in.academic_year_id
     ).first()
@@ -79,7 +79,7 @@ def get_classes(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    query = db.query(SchoolClass)
+    query = db.query(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id)
     if academic_year_id:
         query = query.filter(SchoolClass.academic_year_id == academic_year_id)
     return query.offset(skip).limit(limit).all()
@@ -91,7 +91,7 @@ def update_class(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles([RoleEnum.SUPER_ADMIN, RoleEnum.SCHOOL_ADMIN, RoleEnum.PRINCIPAL]))
 ):
-    school_class = db.query(SchoolClass).filter(SchoolClass.id == class_id).first()
+    school_class = db.query(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id, SchoolClass.id == class_id).first()
     if not school_class:
         raise HTTPException(status_code=404, detail="Class not found")
         
@@ -119,7 +119,7 @@ def delete_class(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles([RoleEnum.SUPER_ADMIN, RoleEnum.SCHOOL_ADMIN, RoleEnum.PRINCIPAL]))
 ):
-    school_class = db.query(SchoolClass).filter(SchoolClass.id == class_id).first()
+    school_class = db.query(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id, SchoolClass.id == class_id).first()
     if not school_class:
         raise HTTPException(status_code=404, detail="Class not found")
         

@@ -60,7 +60,7 @@ def generate_arrangements(
     day_of_week = target_date.weekday() # 0 = Monday
     
     # 1. Get all leaves for the date
-    leaves = db.query(TeacherLeave).filter(TeacherLeave.date == leave_datetime).all()
+    leaves = db.query(TeacherLeave).join(Teacher).filter(Teacher.school_id == current_user.school_id, TeacherLeave.date == leave_datetime).all()
     absent_teacher_dict = {l.teacher_id: l.leave_type for l in leaves}
     
     if not absent_teacher_dict:
@@ -76,7 +76,7 @@ def generate_arrangements(
     
     # Get total periods today for rule validation
     from app.db.models import SchoolSetting
-    setting = db.query(SchoolSetting).first()
+    setting = db.query(SchoolSetting).filter(SchoolSetting.school_id == current_user.school_id).first()
     periods_today = setting.number_of_periods if setting else 7
     lunch_period = setting.lunch_break_period if setting else 4
     if setting and setting.weekly_schedule:
@@ -97,7 +97,7 @@ def generate_arrangements(
             affected_slots.append(slot)
             
     # Track busy teachers per period and daily loads
-    active_teachers = db.query(Teacher).filter(Teacher.is_active == True).all()
+    active_teachers = db.query(Teacher).filter(Teacher.school_id == current_user.school_id, Teacher.is_active == True).all()
     today_slots = db.query(TimetableSlot).filter(TimetableSlot.day_of_week == day_of_week).all()
     today_subs = db.query(Substitution).filter(Substitution.date == leave_datetime).all()
     
@@ -173,7 +173,7 @@ def get_leaves(
     current_user: User = Depends(get_current_user)
 ):
     leave_datetime = datetime.combine(date, datetime.min.time())
-    leaves = db.query(TeacherLeave).filter(TeacherLeave.date == leave_datetime).all()
+    leaves = db.query(TeacherLeave).join(Teacher).filter(Teacher.school_id == current_user.school_id, TeacherLeave.date == leave_datetime).all()
     
     return [
         {
@@ -193,7 +193,7 @@ def delete_leave(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles([RoleEnum.SUPER_ADMIN, RoleEnum.SCHOOL_ADMIN, RoleEnum.PRINCIPAL, RoleEnum.TIMETABLE_COORDINATOR]))
 ):
-    leave = db.query(TeacherLeave).filter(TeacherLeave.id == leave_id).first()
+    leave = db.query(TeacherLeave).join(Teacher).filter(TeacherLeave.id == leave_id, Teacher.school_id == current_user.school_id).first()
     if not leave:
         raise HTTPException(status_code=404, detail="Leave not found")
         

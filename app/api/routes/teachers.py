@@ -66,7 +66,7 @@ def create_teacher(
                 max_id = max(max_id, int(t[0]))
         teacher_in.employee_id = str(max_id + 1)
         
-    teacher = db.query(Teacher).filter(Teacher.employee_id == teacher_in.employee_id).first()
+    teacher = db.query(Teacher).filter(Teacher.employee_id == teacher_in.employee_id, Teacher.school_id == current_user.school_id).first()
     if teacher:
         raise HTTPException(status_code=400, detail="Teacher with this Employee ID already exists.")
         
@@ -83,12 +83,14 @@ def create_teacher(
             email=email_to_use,
             full_name=teacher_in.name,
             hashed_password=get_password_hash("password123"),
-            role=RoleEnum.TEACHER
+            role=RoleEnum.TEACHER,
+            school_id=current_user.school_id
         )
         db.add(user)
         db.flush()
         
     new_teacher = Teacher(
+        school_id=current_user.school_id,
         user_id=user.id,
         employee_id=teacher_in.employee_id,
         mobile=teacher_in.mobile,
@@ -135,7 +137,7 @@ def get_teachers(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    query = db.query(Teacher)
+    query = db.query(Teacher).filter(Teacher.school_id == current_user.school_id)
     if search:
         query = query.filter(Teacher.employee_id.ilike(f"%{search}%"))
     teachers = query.offset(skip).limit(limit).all()
@@ -161,7 +163,7 @@ def get_teachers(
 
 @router.get("/{id}", response_model=TeacherResponse)
 def get_teacher(id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    t = db.query(Teacher).filter(Teacher.id == id).first()
+    t = db.query(Teacher).filter(Teacher.id == id, Teacher.school_id == current_user.school_id).first()
     if not t:
         raise HTTPException(status_code=404, detail="Teacher not found")
     user = t.user
@@ -187,7 +189,7 @@ def update_teacher(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles([RoleEnum.SUPER_ADMIN, RoleEnum.SCHOOL_ADMIN, RoleEnum.PRINCIPAL]))
 ):
-    t = db.query(Teacher).filter(Teacher.id == id).first()
+    t = db.query(Teacher).filter(Teacher.id == id, Teacher.school_id == current_user.school_id).first()
     if not t:
         raise HTTPException(status_code=404, detail="Teacher not found")
         
@@ -260,7 +262,7 @@ def delete_teacher(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles([RoleEnum.SUPER_ADMIN, RoleEnum.SCHOOL_ADMIN]))
 ):
-    teacher = db.query(Teacher).filter(Teacher.id == id).first()
+    teacher = db.query(Teacher).filter(Teacher.id == id, Teacher.school_id == current_user.school_id).first()
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher not found")
     

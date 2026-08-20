@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import SetupWizard from './pages/SetupWizard'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
+import Register from './pages/Register'
 import TeachersPage from './pages/Teachers'
 import SubjectsPage from './pages/Subjects'
 import ClassesPage from './pages/Classes'
@@ -52,6 +53,7 @@ function App() {
         <Routes>
           <Route path="/" element={<DashboardLanding />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/setup" element={<SetupWizard />} />
           <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
           <Route path="/teachers" element={<AppLayout><TeachersPage /></AppLayout>} />
