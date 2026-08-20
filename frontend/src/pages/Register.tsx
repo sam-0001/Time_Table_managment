@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Building2, Mail, Lock, User, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 export default function Register() {
   const [formData, setFormData] = useState({

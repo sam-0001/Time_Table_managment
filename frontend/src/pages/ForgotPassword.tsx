@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, KeyRound, Lock, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 export default function ForgotPassword() {
   const [step, setStep] = useState<1 | 2 | 3>(1);

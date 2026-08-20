@@ -55,6 +55,7 @@ function App() {
           <Route path="/" element={<DashboardLanding />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/setup" element={<SetupWizard />} />
           <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
           <Route path="/teachers" element={<AppLayout><TeachersPage /></AppLayout>} />
