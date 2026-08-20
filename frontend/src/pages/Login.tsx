@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -68,7 +68,7 @@ export default function Login() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
-                  <a href="#" className="text-sm text-blue-600 hover:underline">Forgot password?</a>
+                  <Link to="/forgot-password" className="text-sm text-blue-600 hover:underline">Forgot password?</Link>
                 </div>
                 <Input 
                   type="password" 
@@ -81,6 +81,7 @@ export default function Login() {
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Sign In'}
               </Button>
             </form>
+            <div className="mt-4 text-center text-sm text-slate-500">Don't have a school account? <Link to="/register" className="text-blue-600 hover:underline">Register your school</Link></div>
           </CardContent>
         </Card>
       </div>

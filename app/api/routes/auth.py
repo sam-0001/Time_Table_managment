@@ -63,3 +63,66 @@ def register_school(user_in: SchoolRegisterCreate, db: Session = Depends(get_db)
     db.commit()
     db.refresh(user)
     return user
+
+import random
+from datetime import timedelta
+from app.db.models import OTPCode
+from app.schemas.user import ForgotPasswordRequest, VerifyOTPRequest, ResetPasswordRequest
+
+@router.post("/forgot-password")
+def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == req.email).first()
+    if not user:
+        return {"message": "If that email exists, an OTP has been sent."}
+    
+    otp = str(random.randint(100000, 999999))
+    expires = datetime.utcnow() + timedelta(minutes=15)
+    
+    # In a real application, you would send an email here.
+    # For now, we will print it to the server console.
+    print(f"!!! OTP for {req.email} is: {otp} !!!")
+    
+    otp_record = OTPCode(email=req.email, otp=otp, expires_at=expires)
+    db.add(otp_record)
+    db.commit()
+    
+    return {"message": "If that email exists, an OTP has been sent."}
+
+@router.post("/verify-otp")
+def verify_otp(req: VerifyOTPRequest, db: Session = Depends(get_db)):
+    record = db.query(OTPCode).filter(
+        OTPCode.email == req.email,
+        OTPCode.otp == req.otp,
+        OTPCode.used == False,
+        OTPCode.expires_at > datetime.utcnow()
+    ).first()
+    
+    if not record:
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+        
+    return {"message": "OTP verified successfully"}
+
+@router.post("/reset-password")
+def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
+    record = db.query(OTPCode).filter(
+        OTPCode.email == req.email,
+        OTPCode.otp == req.otp,
+        OTPCode.used == False,
+        OTPCode.expires_at > datetime.utcnow()
+    ).first()
+    
+    if not record:
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+        
+    user = db.query(User).filter(User.email == req.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    user.hashed_password = get_password_hash(req.new_password)
+    record.used = True
+    
+    db.add(user)
+    db.add(record)
+    db.commit()
+    
+    return {"message": "Password reset successfully"}

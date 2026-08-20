@@ -13,6 +13,14 @@ class RoleEnum(enum.Enum):
     TIMETABLE_COORDINATOR = "TIMETABLE_COORDINATOR"
     TEACHER = "TEACHER"
 
+class OTPCode(Base):
+    __tablename__ = "otp_codes"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String, index=True, nullable=False)
+    otp = Column(String, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    used = Column(Boolean, default=False)
+
 class User(Base):
     __tablename__ = "users"
     id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
