@@ -59,6 +59,9 @@ def create_teacher(
     db: Session = Depends(get_db), 
     current_user: User = Depends(require_roles([RoleEnum.SUPER_ADMIN, RoleEnum.SCHOOL_ADMIN, RoleEnum.PRINCIPAL]))
 ):
+    if current_user.school.plan_type == "DEMO":
+        if db.query(Teacher).filter(Teacher.school_id == current_user.school_id).count() >= 8:
+            raise HTTPException(status_code=403, detail="Demo plan limited to 8 teachers. Please upgrade to Pro to add more.")
     if not teacher_in.employee_id:
         max_id = 0
         for t in db.query(Teacher.employee_id).all():
@@ -193,6 +196,8 @@ def update_teacher(
     if not t:
         raise HTTPException(status_code=404, detail="Teacher not found")
         
+    if getattr(t, "is_demo", False) and current_user.school.plan_type == "DEMO":
+        raise HTTPException(status_code=403, detail="Cannot edit demo data. Upgrade to Pro.")
     update_data = teacher_in.model_dump(exclude_unset=True)
     if "assignments" in update_data:
         # Delete old
@@ -265,6 +270,8 @@ def delete_teacher(
     teacher = db.query(Teacher).filter(Teacher.id == id, Teacher.school_id == current_user.school_id).first()
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher not found")
+    if teacher.is_demo and current_user.school.plan_type == "DEMO":
+        raise HTTPException(status_code=403, detail="Cannot edit demo data. Upgrade to Pro.")
     
     db.delete(teacher)
     db.commit()

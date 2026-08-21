@@ -29,6 +29,7 @@ class User(Base):
     full_name = Column(String, index=True, nullable=False)
     role = Column(Enum(RoleEnum), default=RoleEnum.TEACHER, nullable=False)
     is_active = Column(Boolean, default=True)
+    is_demo = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     school_id = Column(String, ForeignKey("schools.id", ondelete="CASCADE"), nullable=True)
@@ -111,6 +112,7 @@ class Teacher(Base):
     max_daily_periods = Column(Integer, default=7)
     max_weekly_periods = Column(Integer, default=32)
     is_active = Column(Boolean, default=True)
+    is_demo = Column(Boolean, default=False)
     school_id = Column(String, ForeignKey("schools.id", ondelete="CASCADE"), nullable=True)
 
     # Relationships
@@ -127,6 +129,7 @@ class SchoolClass(Base):
     academic_year_id = Column(String, ForeignKey("academic_years.id", ondelete="CASCADE"))
     name = Column(String, nullable=False) # e.g. "10", "Jr KG"
     level = Column(Integer, nullable=False) # for sorting
+    is_demo = Column(Boolean, default=False)
     
     # Relationships
     academic_year = relationship("AcademicYear", back_populates="classes")
@@ -140,6 +143,7 @@ class Division(Base):
     name = Column(String, nullable=False) # e.g. "A", "B"
     class_teacher_id = Column(String, ForeignKey("teachers.id", ondelete="SET NULL"), nullable=True)
     classroom_id = Column(String, ForeignKey("classrooms.id", ondelete="SET NULL"), nullable=True)
+    is_demo = Column(Boolean, default=False)
     
     # Relationships
     school_class = relationship("SchoolClass", back_populates="divisions")
@@ -166,6 +170,8 @@ class Subject(Base):
     code = Column(String, index=True)
     weekly_periods = Column(Integer, default=5)
     double_period_allowed = Column(Boolean, default=False)
+    is_demo = Column(Boolean, default=False)
+    is_demo = Column(Boolean, default=False)
     is_lab = Column(Boolean, default=False)
     
     __table_args__ = (

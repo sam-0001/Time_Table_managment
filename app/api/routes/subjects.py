@@ -110,6 +110,8 @@ def delete_subject(
     subject = db.query(Subject).join(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id, Subject.id == id).first()
     if not subject:
         raise HTTPException(status_code=404, detail="Subject not found")
+    if subject.is_demo and current_user.school.plan_type == "DEMO":
+        raise HTTPException(status_code=403, detail="Cannot edit demo data. Upgrade to Pro.")
     
     db.delete(subject)
     db.commit()

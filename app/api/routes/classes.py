@@ -49,6 +49,9 @@ def create_class(
     db: Session = Depends(get_db), 
     current_user: User = Depends(require_roles([RoleEnum.SUPER_ADMIN, RoleEnum.SCHOOL_ADMIN, RoleEnum.PRINCIPAL]))
 ):
+    if current_user.school.plan_type == "DEMO":
+        if db.query(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id).count() >= 4:
+            raise HTTPException(status_code=403, detail="Demo plan limited to 4 classes. Upgrade to Pro to add more.")
     school_class = db.query(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id, 
         SchoolClass.name == class_in.name, 
         SchoolClass.academic_year_id == resolve_academic_year(db, current_user, class_in.academic_year_id)
@@ -102,6 +105,8 @@ def update_class(
     school_class = db.query(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id, SchoolClass.id == class_id).first()
     if not school_class:
         raise HTTPException(status_code=404, detail="Class not found")
+    if getattr(school_class, "is_demo", False) and current_user.school.plan_type == "DEMO":
+        raise HTTPException(status_code=403, detail="Cannot edit demo data. Upgrade to Pro.")
         
     school_class.name = class_in.name
     school_class.level = class_in.level
@@ -130,6 +135,8 @@ def delete_class(
     school_class = db.query(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id, SchoolClass.id == class_id).first()
     if not school_class:
         raise HTTPException(status_code=404, detail="Class not found")
+    if getattr(school_class, "is_demo", False) and current_user.school.plan_type == "DEMO":
+        raise HTTPException(status_code=403, detail="Cannot edit demo data. Upgrade to Pro.")
         
     db.delete(school_class)
     db.commit()

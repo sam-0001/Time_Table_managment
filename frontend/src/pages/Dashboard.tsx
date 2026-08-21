@@ -2,6 +2,7 @@ import { useGenerateTimetable, useTimetable } from '@/hooks/useTimetable'
 import { useSettings } from '@/hooks/useSettings'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { PaymentModal } from '@/components/PaymentModal'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 import { BookOpen, Users, CalendarDays, UserX, Loader2, Printer, Download } from 'lucide-react'
@@ -40,7 +41,11 @@ export default function Dashboard() {
       const res = await generateTimetable(TEMP_ACADEMIC_YEAR_ID)
       toast.success(res.message || 'Timetable generated successfully')
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Failed to generate timetable. Ensure sufficient teachers and subjects are added.')
+      if (error.response?.status === 402) {
+        setIsPaymentModalOpen(true)
+      } else {
+        toast.error(error.response?.data?.detail || 'Failed to generate timetable. Ensure sufficient teachers and subjects are added.')
+      }
     }
   }
 

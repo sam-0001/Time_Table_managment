@@ -25,6 +25,7 @@ class UserUpdate(BaseModel):
 class UserInDBBase(UserBase):
     id: str
     is_active: bool
+    school_plan: Optional[str] = None
 
     class Config:
         from_attributes = True
