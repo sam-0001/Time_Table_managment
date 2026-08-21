@@ -11,7 +11,7 @@ interface PaymentModalProps {
 }
 
 // Ensure cashfree SDK is available via script in index.html, or we mock it
-declare const Cashfree: any;
+declare global { interface Window { Cashfree: any } }
 
 export function PaymentModal({ isOpen, setIsOpen, onSuccess }: PaymentModalProps) {
   const [loading, setLoading] = useState(false)

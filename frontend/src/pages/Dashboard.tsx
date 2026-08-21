@@ -24,6 +24,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
 
   const [viewMode, setViewMode] = useState<'division' | 'teacher' | 'master'>('division')
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('')
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('')
 
@@ -159,6 +160,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans print:bg-white print:min-h-0">
+      <PaymentModal isOpen={isPaymentModalOpen} setIsOpen={setIsPaymentModalOpen} onSuccess={() => { handleGenerate() }} />
       <div className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 print:hidden">
         <div className="flex h-16 items-center px-8">
           <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
