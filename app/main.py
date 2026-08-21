@@ -57,6 +57,7 @@ def run_startup_migrations():
             db.execute(text("ALTER TABLE schools ADD COLUMN IF NOT EXISTS plan_type VARCHAR DEFAULT 'FREE'"))
             db.execute(text("ALTER TABLE schools ADD COLUMN IF NOT EXISTS available_generations INTEGER DEFAULT 0"))
             db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_demo BOOLEAN DEFAULT FALSE"))
+            db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR"))
             db.execute(text("ALTER TABLE teachers ADD COLUMN IF NOT EXISTS is_demo BOOLEAN DEFAULT FALSE"))
             db.execute(text("ALTER TABLE classes ADD COLUMN IF NOT EXISTS is_demo BOOLEAN DEFAULT FALSE"))
             db.execute(text("ALTER TABLE subjects ADD COLUMN IF NOT EXISTS is_demo BOOLEAN DEFAULT FALSE"))
@@ -68,6 +69,7 @@ def run_startup_migrations():
                 "ALTER TABLE schools ADD COLUMN plan_type TEXT DEFAULT 'FREE'",
                 "ALTER TABLE schools ADD COLUMN available_generations INTEGER DEFAULT 0",
                 "ALTER TABLE users ADD COLUMN is_demo INTEGER DEFAULT 0",
+                "ALTER TABLE users ADD COLUMN phone TEXT",
                 "ALTER TABLE teachers ADD COLUMN is_demo INTEGER DEFAULT 0",
                 "ALTER TABLE classes ADD COLUMN is_demo INTEGER DEFAULT 0",
                 "ALTER TABLE subjects ADD COLUMN is_demo INTEGER DEFAULT 0",
