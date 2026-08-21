@@ -52,7 +52,7 @@ def generate_demo_data(db: Session, school_id: str, academic_year_id: str):
         
         user = User(
             id=str(uuid.uuid4()),
-            email=f"demo_{subj_code.lower()}@demo.com",
+            email=f"demo_{subj_code.lower()}_{school_id[:8]}@demo.com",
             hashed_password="demo",
             full_name=f"Demo {subj_name} Teacher",
             role=RoleEnum.TEACHER,
