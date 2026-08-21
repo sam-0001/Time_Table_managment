@@ -99,7 +99,7 @@ def generate_arrangements(
     # Track busy teachers per period and daily loads
     active_teachers = db.query(Teacher).filter(Teacher.school_id == current_user.school_id, Teacher.is_active == True).all()
     today_slots = db.query(TimetableSlot).filter(TimetableSlot.day_of_week == day_of_week).all()
-    today_subs = db.query(Substitution).filter(Substitution.date == leave_datetime).all()
+    today_subs = db.query(Substitution).join(TimetableSlot).join(Teacher).filter(Teacher.school_id == current_user.school_id, Substitution.date == leave_datetime).all()
     
     daily_loads = {t.id: 0 for t in active_teachers}
     busy_teachers_per_period = {p: set() for p in range(periods_today)}
@@ -208,7 +208,7 @@ def get_arrangements(
     current_user: User = Depends(get_current_user)
 ):
     leave_datetime = datetime.combine(date, datetime.min.time())
-    subs = db.query(Substitution).filter(Substitution.date == leave_datetime).all()
+    subs = db.query(Substitution).join(TimetableSlot).join(Teacher).filter(Teacher.school_id == current_user.school_id, Substitution.date == leave_datetime).all()
     
     return [
         {

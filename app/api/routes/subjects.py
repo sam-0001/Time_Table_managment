@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 from app.db.database import get_db
-from app.db.models import Subject, User, RoleEnum
+from app.db.models import Subject, User, RoleEnum, SchoolClass, AcademicYear
 from app.api.deps import get_current_user, require_roles
 from pydantic import BaseModel
 
