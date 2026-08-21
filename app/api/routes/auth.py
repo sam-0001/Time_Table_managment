@@ -138,10 +138,25 @@ def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
 
 from app.api.deps import get_current_user
 from app.core.demo_data import generate_demo_data
-from app.schemas.user import ChangePasswordRequest
+from app.schemas.user import ChangePasswordRequest, UpdateProfileRequest
 
 @router.get("/me", response_model=UserSchema)
 def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@router.patch("/me", response_model=UserSchema)
+def update_profile(
+    req: UpdateProfileRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if req.full_name is not None:
+        current_user.full_name = req.full_name
+    if req.phone is not None:
+        current_user.phone = req.phone
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
     return current_user
 
 @router.post("/change-password")

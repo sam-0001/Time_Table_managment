@@ -33,6 +33,7 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     school = relationship("School")
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    phone = Column(String, nullable=True)
     school_id = Column(String, ForeignKey("schools.id", ondelete="CASCADE"), nullable=True)
 
     @property

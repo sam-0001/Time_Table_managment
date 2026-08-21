@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Loader2, User, LogOut, KeyRound, CreditCard, CheckCircle2, Zap, Star, Crown } from 'lucide-react'
+import { Loader2, User, LogOut, KeyRound, CreditCard, CheckCircle2, Zap, Star, Crown, Phone } from 'lucide-react'
 import { api } from '@/lib/api'
 import { PaymentModal } from '@/components/PaymentModal'
 
@@ -15,11 +15,56 @@ export default function Profile() {
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [selectedPlanAmount, setSelectedPlanAmount] = useState(499)
+  const [phone, setPhone] = useState('')
+  const [isSavingPhone, setIsSavingPhone] = useState(false)
   const navigate = useNavigate()
 
+  const fetchUser = () => {
+    api.get('/auth/me').then((r: any) => {
+      setUser(r.data)
+      setPhone(r.data?.phone || '')
+    }).catch(console.error)
+  }
+
   useEffect(() => {
-    api.get('/auth/me').then((r: any) => setUser(r.data)).catch(console.error)
+    fetchUser()
+    const params = new URLSearchParams(window.location.search)
+    const orderId = params.get('order_id')
+    if (orderId) {
+      api.post('/payments/verify', { order_id: orderId })
+        .then((res: any) => {
+          if (res.data.status === 'SUCCESS') {
+            toast.success('Payment successful! Plan upgraded.')
+            fetchUser()
+          } else {
+            toast.info('Payment is still pending. We will notify you once completed.')
+          }
+        })
+        .catch(() => toast.error('Could not verify payment status automatically.'))
+        .finally(() => {
+          window.history.replaceState({}, '', '/profile')
+        })
+    }
   }, [])
+
+  const handleSavePhone = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const digits = phone.replace(/\D/g, '')
+    if (digits.length !== 10) {
+      toast.error('Please enter a valid 10-digit mobile number')
+      return
+    }
+    setIsSavingPhone(true)
+    try {
+      await api.patch('/auth/me', { phone: digits })
+      toast.success('Mobile number saved!')
+      fetchUser()
+    } catch {
+      toast.error('Could not save mobile number')
+    } finally {
+      setIsSavingPhone(false)
+    }
+  }
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -105,6 +150,30 @@ export default function Profile() {
                     <span className="text-sm font-medium text-green-600">● Active</span>
                   </div>
                 </div>
+
+                {/* Mobile Number */}
+                <form onSubmit={handleSavePhone} className="space-y-2 pt-1">
+                  <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <Phone className="h-3.5 w-3.5" /> Mobile Number
+                    {user.phone && <span className="ml-auto text-xs text-green-600 font-normal">Saved ✓</span>}
+                  </label>
+                  <div className="flex gap-2">
+                    <span className="flex items-center px-3 bg-slate-100 border border-slate-200 rounded-lg text-slate-500 text-sm font-medium">+91</span>
+                    <Input
+                      type="tel"
+                      maxLength={10}
+                      placeholder="10-digit mobile"
+                      value={phone}
+                      onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
+                      className="flex-1"
+                    />
+                    <Button type="submit" disabled={isSavingPhone} size="sm" className="bg-slate-900 hover:bg-slate-800 text-white shrink-0">
+                      {isSavingPhone ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Save'}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-slate-400">Used automatically for payment processing — no need to re-enter.</p>
+                </form>
+
                 <Button variant="destructive" onClick={handleLogout} className="w-full">
                   <LogOut className="h-4 w-4 mr-2" />Sign Out
                 </Button>

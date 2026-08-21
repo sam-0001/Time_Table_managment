@@ -25,6 +25,7 @@ class UserUpdate(BaseModel):
 class UserInDBBase(UserBase):
     id: str
     is_active: bool
+    phone: Optional[str] = None
     school_plan: Optional[str] = None
     is_demo_mode: Optional[bool] = False
     available_generations: Optional[int] = 0
@@ -34,6 +35,10 @@ class UserInDBBase(UserBase):
 
 class User(UserInDBBase):
     pass
+
+class UpdateProfileRequest(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str

@@ -1,9 +1,10 @@
-import { Fragment, useState } from 'react'
+import { Fragment, useState, useEffect } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { Zap, Crown, Star, X } from 'lucide-react'
+import { Zap, Crown, Star, X, Phone } from 'lucide-react'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
+import { Input } from '@/components/ui/input'
 
 interface PaymentModalProps {
   isOpen: boolean
@@ -16,10 +17,49 @@ declare global { interface Window { Cashfree: any } }
 
 export function PaymentModal({ isOpen, setIsOpen, onSuccess, amount = 499 }: PaymentModalProps) {
   const [loading, setLoading] = useState(false)
+  const [step, setStep] = useState<'phone' | 'confirm'>('confirm')
+  const [phone, setPhone] = useState('')
+  const [savingPhone, setSavingPhone] = useState(false)
   const navigate = useNavigate()
   const isPro = amount === 799
   const generations = isPro ? 5 : 2
   const planName = isPro ? 'Pro' : 'Plus'
+
+  // When modal opens, check if user already has a phone saved
+  useEffect(() => {
+    if (isOpen) {
+      api.get('/auth/me').then((r: any) => {
+        if (r.data?.phone && r.data.phone.length >= 10) {
+          setPhone(r.data.phone)
+          setStep('confirm')
+        } else {
+          setPhone('')
+          setStep('phone')
+        }
+      }).catch(() => {
+        setPhone('')
+        setStep('phone')
+      })
+    }
+  }, [isOpen])
+
+  const handleSavePhone = async () => {
+    const digits = phone.replace(/\D/g, '')
+    if (digits.length !== 10) {
+      toast.error('Please enter a valid 10-digit mobile number')
+      return
+    }
+    setSavingPhone(true)
+    try {
+      await api.patch('/auth/me', { phone: digits })
+      toast.success('Mobile number saved!')
+      setStep('confirm')
+    } catch {
+      toast.error('Could not save mobile number. Please try again.')
+    } finally {
+      setSavingPhone(false)
+    }
+  }
 
   const handlePayment = async () => {
     setLoading(true)
@@ -32,16 +72,37 @@ export function PaymentModal({ isOpen, setIsOpen, onSuccess, amount = 499 }: Pay
           setIsOpen(false)
           onSuccess()
         }
+        setLoading(false)
         return
       }
-      const cashfree = await window.Cashfree({ mode: 'sandbox' })
+      
+      const cashfree = await window.Cashfree({ mode: data.environment || 'sandbox' })
+      
       cashfree.checkout({
         paymentSessionId: data.payment_session_id,
-        returnUrl: `${window.location.origin}/profile?order_id=${data.order_id}`,
+        redirectTarget: "_modal", // This makes it open in a popup!
+      }).then((result: any) => {
+        if (result.error) {
+          toast.error(result.error.message || "Payment cancelled or failed")
+          setLoading(false)
+        } else if (result.paymentDetails) {
+          // Verification step right after popup closes
+          api.post('/payments/verify', { order_id: data.order_id })
+            .then((res: any) => {
+              if (res.data.status === 'SUCCESS') {
+                toast.success('Payment successful! Plan upgraded.')
+                setIsOpen(false)
+                onSuccess()
+              } else {
+                toast.info('Payment pending or failed. We will notify you once completed.')
+              }
+            })
+            .catch(() => toast.error('Could not verify payment status automatically.'))
+            .finally(() => setLoading(false))
+        }
       })
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Payment initiation failed')
-    } finally {
       setLoading(false)
     }
   }
@@ -95,52 +156,103 @@ export function PaymentModal({ isOpen, setIsOpen, onSuccess, amount = 499 }: Pay
                   </div>
                 </div>
 
-                {/* Features */}
-                <div className="px-6 py-5 space-y-3">
-                  <p className="text-slate-500 text-sm">You will receive:</p>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                      <div className="h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                        <Zap className="h-4 w-4 text-green-600" />
+                {/* Body */}
+                <div className="px-6 py-5 space-y-4">
+                  {step === 'phone' ? (
+                    /* ── Step 1: Collect phone number ── */
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <Phone className="h-5 w-5 text-amber-600 shrink-0" />
+                        <div>
+                          <p className="font-semibold text-slate-900 text-sm">Mobile number required</p>
+                          <p className="text-slate-500 text-xs">Required by Cashfree for payment processing. Saved to your profile automatically.</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-slate-900 text-sm">{generations} Timetable Generations</p>
-                        <p className="text-slate-500 text-xs">Generate clash-free schedules for your school</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                      <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                        <Crown className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-slate-900 text-sm">Full Access — No Limits</p>
-                        <p className="text-slate-500 text-xs">Add unlimited teachers, subjects & classes</p>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Action buttons */}
-                  <div className="flex flex-col gap-2 pt-2">
-                    <button
-                      onClick={handlePayment}
-                      disabled={loading}
-                      className={`w-full py-3 rounded-xl font-semibold text-white transition-all ${isPro ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-900 hover:bg-slate-800'} ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    >
-                      {loading ? 'Processing payment...' : ("Pay ₹" + amount + " — Upgrade Now")}
-                    </button>
-                    <button
-                      onClick={handleViewPlans}
-                      className="w-full py-2.5 rounded-xl font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors text-sm"
-                    >
-                      View All Plans on Profile
-                    </button>
-                    <button
-                      onClick={() => setIsOpen(false)}
-                      className="w-full py-2 text-slate-400 hover:text-slate-600 text-sm transition-colors"
-                    >
-                      Maybe later
-                    </button>
-                  </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700">Your 10-digit mobile number</label>
+                        <div className="flex gap-2">
+                          <span className="flex items-center px-3 bg-slate-100 border border-slate-200 rounded-lg text-slate-500 text-sm font-medium">+91</span>
+                          <Input
+                            type="tel"
+                            maxLength={10}
+                            placeholder="9876543210"
+                            value={phone}
+                            onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleSavePhone}
+                        disabled={savingPhone || phone.replace(/\D/g, '').length !== 10}
+                        className={`w-full py-3 rounded-xl font-semibold text-white transition-all ${isPro ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-900 hover:bg-slate-800'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        {savingPhone ? 'Saving...' : 'Save & Continue to Payment'}
+                      </button>
+                      <button
+                        onClick={() => setIsOpen(false)}
+                        className="w-full py-2 text-slate-400 hover:text-slate-600 text-sm transition-colors"
+                      >
+                        Maybe later
+                      </button>
+                    </div>
+                  ) : (
+                    /* ── Step 2: Confirm & Pay ── */
+                    <>
+                      <p className="text-slate-500 text-sm">You will receive:</p>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                          <div className="h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                            <Zap className="h-4 w-4 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900 text-sm">{generations} Timetable Generations</p>
+                            <p className="text-slate-500 text-xs">Generate clash-free schedules for your school</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                          <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                            <Crown className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900 text-sm">Full Access — No Limits</p>
+                            <p className="text-slate-500 text-xs">Add unlimited teachers, subjects & classes</p>
+                          </div>
+                        </div>
+                        {phone && (
+                          <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-green-700 text-xs">
+                            <Phone className="h-3.5 w-3.5 shrink-0" />
+                            <span>Paying with +91 {phone}</span>
+                            <button onClick={() => setStep('phone')} className="ml-auto text-blue-600 hover:underline text-xs">Change</button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col gap-2 pt-1">
+                        <button
+                          onClick={handlePayment}
+                          disabled={loading}
+                          className={`w-full py-3 rounded-xl font-semibold text-white transition-all ${isPro ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-900 hover:bg-slate-800'} ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        >
+                          {loading ? 'Processing payment...' : ("Pay ₹" + amount + " — Upgrade Now")}
+                        </button>
+                        <button
+                          onClick={handleViewPlans}
+                          className="w-full py-2.5 rounded-xl font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors text-sm"
+                        >
+                          View All Plans on Profile
+                        </button>
+                        <button
+                          onClick={() => setIsOpen(false)}
+                          className="w-full py-2 text-slate-400 hover:text-slate-600 text-sm transition-colors"
+                        >
+                          Maybe later
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </Dialog.Panel>
             </Transition.Child>
