@@ -78,7 +78,9 @@ def generate_timetable(
     result = generator.generate()
     if result["status"] == "SUCCESS":
         # Clear old slots for this academic year
-        db.query(TimetableSlot).join(Teacher).filter(Teacher.school_id == current_user.school_id, 
+        teacher_ids = [t.id for t in db.query(Teacher.id).filter(Teacher.school_id == current_user.school_id).all()]
+        db.query(TimetableSlot).filter(
+            TimetableSlot.teacher_id.in_(teacher_ids),
             TimetableSlot.division_id.in_([d["id"] for d in divisions])
         ).delete(synchronize_session=False)
         db.commit()
