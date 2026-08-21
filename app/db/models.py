@@ -31,6 +31,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_demo = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    school = relationship("School")
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     school_id = Column(String, ForeignKey("schools.id", ondelete="CASCADE"), nullable=True)
 
@@ -236,3 +237,12 @@ class AuditLog(Base):
     resource = Column(String, nullable=False)
     details = Column(Text, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
+
+class Payment(Base):
+    __tablename__ = "payments"
+    order_id = Column(String, primary_key=True)
+    school_id = Column(String, ForeignKey("schools.id", ondelete="CASCADE"))
+    amount = Column(Float, nullable=False)
+    status = Column(String, default="PENDING")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    school = relationship("School")

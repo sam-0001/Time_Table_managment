@@ -83,7 +83,7 @@ export function PaymentModal({ isOpen, setIsOpen, onSuccess }: PaymentModalProps
                     </Dialog.Title>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        You are currently on the Demo plan. To add more teachers, subjects, or generate real timetables, please upgrade to the Pro plan for a one-time fee of ₹499.
+                        Unlock the power to add unlimited teachers, subjects, and classes! For ₹499, you get 2 Timetable Generations for your full school data.
                       </p>
                     </div>
                   </div>
