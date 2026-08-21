@@ -127,3 +127,25 @@ def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
     db.commit()
     
     return {"message": "Password reset successfully"}
+
+from app.api.deps import get_current_user
+from app.schemas.user import ChangePasswordRequest
+
+@router.get("/me", response_model=UserSchema)
+def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@router.post("/change-password")
+def change_password(
+    req: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not verify_password(req.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect current password")
+    
+    current_user.hashed_password = get_password_hash(req.new_password)
+    db.add(current_user)
+    db.commit()
+    
+    return {"message": "Password changed successfully"}

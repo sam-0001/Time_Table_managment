@@ -10,6 +10,7 @@ import SubjectsPage from './pages/Subjects'
 import ClassesPage from './pages/Classes'
 import LeavesPage from './pages/Leaves'
 import SettingsPage from './pages/Settings'
+import Profile from './pages/Profile'
 import { AppLayout } from './components/layout/AppLayout'
 
 const queryClient = new QueryClient()
@@ -63,6 +64,7 @@ function App() {
           <Route path="/classes" element={<AppLayout><ClassesPage /></AppLayout>} />
           <Route path="/leaves" element={<AppLayout><LeavesPage /></AppLayout>} />
           <Route path="/settings" element={<AppLayout><SettingsPage /></AppLayout>} />
+          <Route path="/profile" element={<AppLayout><Profile /></AppLayout>} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

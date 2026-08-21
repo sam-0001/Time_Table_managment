@@ -49,15 +49,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
       
       <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-        <div className="flex items-center gap-3 px-2 py-2">
+        <Link to="/profile" className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
           <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 flex items-center justify-center text-sm font-medium">
-            AD
+            <Settings className="h-4 w-4" />
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-slate-900 dark:text-white">Admin User</span>
-            <span className="text-xs text-slate-500">admin@school.edu</span>
+            <span className="text-sm font-medium text-slate-900 dark:text-white">My Profile</span>
+            <span className="text-xs text-slate-500">Manage Account</span>
           </div>
-        </div>
+        </Link>
       </div>
     </div>
   )
