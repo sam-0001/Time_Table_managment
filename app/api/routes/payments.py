@@ -93,9 +93,14 @@ def verify_payment(
     if CASHFREE_APP_ID == "TEST_APP_ID":
         payment.status = "PAID"
         current_user.school.plan_type = "PRO"
-        current_user.school.available_generations += 2
+        if payment.amount == 799.00:
+            current_user.school.available_generations += 5
+            msg = "5 Generations added to your account."
+        else:
+            current_user.school.available_generations += 2
+            msg = "2 Generations added to your account."
         db.commit()
-        return {"status": "SUCCESS", "message": "Payment successful! 2 Generations added to your account."}
+        return {"status": "SUCCESS", "message": f"Payment successful! {msg}"}
         
     url = f"https://sandbox.cashfree.com/pg/orders/{req.order_id}" if CASHFREE_ENV == "SANDBOX" else f"https://api.cashfree.com/pg/orders/{req.order_id}"
     headers = {
@@ -112,9 +117,14 @@ def verify_payment(
         if data.get("order_status") == "PAID":
             payment.status = "PAID"
             current_user.school.plan_type = "PRO"
-            current_user.school.available_generations += 2
+            if payment.amount == 799.00:
+                current_user.school.available_generations += 5
+                msg = "5 Generations added to your account."
+            else:
+                current_user.school.available_generations += 2
+                msg = "2 Generations added to your account."
             db.commit()
-            return {"status": "SUCCESS", "message": "Payment successful! 2 Generations added to your account."}
+            return {"status": "SUCCESS", "message": f"Payment successful! {msg}"}
         else:
             return {"status": "PENDING", "message": "Payment not completed yet"}
     except Exception as e:
@@ -147,7 +157,10 @@ async def cashfree_webhook(request: Request, db: Session = Depends(get_db)):
                 if payment and payment.status != "PAID":
                     payment.status = "PAID"
                     payment.school.plan_type = "PRO"
-                    payment.school.available_generations += 2
+                    if payment.amount == 799.00:
+                        payment.school.available_generations += 5
+                    else:
+                        payment.school.available_generations += 2
                     db.commit()
         return {"status": "OK"}
     except Exception as e:

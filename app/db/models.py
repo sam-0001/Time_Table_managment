@@ -40,6 +40,10 @@ class User(Base):
         if self.is_demo_mode:
             return "DEMO"
         return self.school.plan_type if self.school else None
+
+    @property
+    def available_generations(self):
+        return self.school.available_generations if self.school else 0
         
     _is_demo_mode = False
     
@@ -139,6 +143,10 @@ class Teacher(Base):
         if self.is_demo_mode:
             return "DEMO"
         return self.school.plan_type if self.school else None
+
+    @property
+    def available_generations(self):
+        return self.school.available_generations if self.school else 0
         
     _is_demo_mode = False
     

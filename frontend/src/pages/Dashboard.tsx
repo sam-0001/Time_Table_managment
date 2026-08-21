@@ -81,7 +81,7 @@ export default function Dashboard() {
       const res = await generateTimetable(TEMP_ACADEMIC_YEAR_ID)
       toast.success(res.message || 'Timetable generated successfully')
     } catch (error: any) {
-      if (error.response?.status === 402) {
+      if (error.response?.status === 402 || error.response?.status === 403) {
         setIsPaymentModalOpen(true)
       } else {
         toast.error(error.response?.data?.detail || 'Failed to generate timetable. Ensure sufficient teachers and subjects are added.')

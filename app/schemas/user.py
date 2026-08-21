@@ -27,6 +27,7 @@ class UserInDBBase(UserBase):
     is_active: bool
     school_plan: Optional[str] = None
     is_demo_mode: Optional[bool] = False
+    available_generations: Optional[int] = 0
 
     class Config:
         from_attributes = True

@@ -3,6 +3,7 @@ import { Dialog, Transition } from '@headlessui/react'
 import { CheckIcon } from '@heroicons/react/24/outline'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
+import { useNavigate } from 'react-router-dom'
 
 interface PaymentModalProps {
   isOpen: boolean
@@ -13,18 +14,19 @@ interface PaymentModalProps {
 // Ensure cashfree SDK is available via script in index.html, or we mock it
 declare global { interface Window { Cashfree: any } }
 
-export function PaymentModal({ isOpen, setIsOpen, onSuccess }: PaymentModalProps) {
+export function PaymentModal({ isOpen, setIsOpen, onSuccess, amount = 499.00 }: PaymentModalProps & { amount?: number }) {
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
   const handlePayment = async () => {
     setLoading(true)
     try {
-      const { data } = await api.post('/payments/create-order', { amount: 499.00, currency: "INR" })
+      const { data } = await api.post('/payments/create-order', { amount, currency: "INR" })
       
       if (data.payment_session_id === "MOCK_SESSION_ID") {
          const { data: vData } = await api.post('/payments/verify', { order_id: data.order_id })
          if (vData.status === "SUCCESS") {
-            toast.success("Upgraded to Pro successfully!")
+            toast.success("Upgraded successfully!")
             setIsOpen(false)
             onSuccess()
          }
@@ -79,23 +81,30 @@ export function PaymentModal({ isOpen, setIsOpen, onSuccess }: PaymentModalProps
                   </div>
                   <div className="mt-3 text-center sm:mt-5">
                     <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
-                      Upgrade to Pro
+                      Upgrade Plan
                     </Dialog.Title>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        Unlock the power to add unlimited teachers, subjects, and classes! For ₹499, you get 2 Timetable Generations for your full school data.
+                        Unlock the power to add unlimited teachers, subjects, and classes! For ₹{amount}, you get {amount === 799 ? 5 : 2} Timetable Generations for your full school data.
                       </p>
                     </div>
                   </div>
                 </div>
-                <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-3 sm:gap-3">
                   <button
                     type="button"
-                    className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                    className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-3"
                     onClick={handlePayment}
                     disabled={loading}
                   >
-                    {loading ? 'Processing...' : 'Pay ₹499'}
+                    {loading ? 'Processing...' : 'Pay ₹{amount}'}
+                  </button>
+                  <button
+                    type="button"
+                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                    onClick={() => { setIsOpen(false); navigate('/profile'); }}
+                  >
+                    View All Plans
                   </button>
                   <button
                     type="button"
