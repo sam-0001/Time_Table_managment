@@ -67,6 +67,11 @@ def register_school(user_in: SchoolRegisterCreate, db: Session = Depends(get_db)
     db.add(user)
     db.commit()
     db.refresh(user)
+    
+    db.refresh(academic_year)
+    if school.plan_type == "DEMO":
+        generate_demo_data(db, school.id, academic_year.id)
+        
     return user
 
 import random
@@ -134,6 +139,7 @@ def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
     return {"message": "Password reset successfully"}
 
 from app.api.deps import get_current_user
+from app.core.demo_data import generate_demo_data
 from app.schemas.user import ChangePasswordRequest
 
 @router.get("/me", response_model=UserSchema)
