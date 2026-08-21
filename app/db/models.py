@@ -45,8 +45,6 @@ class School(Base):
     name = Column(String, nullable=False)
     code = Column(String, unique=True, index=True)
     address = Column(String)
-    plan_type = Column(String, default="DEMO") # "DEMO" or "PRO"
-    available_generations = Column(Integer, default=0)
     city = Column(String)
     state = Column(String)
     pincode = Column(String)
