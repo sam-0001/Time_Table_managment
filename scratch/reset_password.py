@@ -1,20 +1,24 @@
 import sys
 import os
 sys.path.insert(0, os.path.abspath('.'))
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
 from app.db.models import User
 from app.core.security import get_password_hash
 
 postgres_url = "postgresql://postgres:TimeTable#1100@db.lxczvmpobvblymkuukim.supabase.co:5432/postgres"
 engine = create_engine(postgres_url)
-Session = sessionmaker(bind=engine)
-session = Session()
+db = Session(engine)
 
-user = session.query(User).filter(User.email == "admin@school.edu").first()
+new_password = "Sunil@01"
+hashed = get_password_hash(new_password)
+
+user = db.query(User).filter(User.email == "sc922467@gmail.com").first()
 if user:
-    user.hashed_password = get_password_hash("admin123")
-    session.commit()
-    print("Password reset successfully for admin@school.edu to: admin123")
+    user.hashed_password = hashed
+    db.commit()
+    print("✅ Password successfully updated for sc922467@gmail.com")
 else:
-    print("User not found.")
+    print("❌ User not found in the database!")
+

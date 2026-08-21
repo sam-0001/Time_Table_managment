@@ -66,6 +66,9 @@ def generate_timetable(
             "division_id": ts.division_id,
             "weekly_periods": ts.subject.weekly_periods
         })
+        
+    if not teacher_subjects:
+        raise HTTPException(status_code=400, detail="No teacher-subject workload found. Please go to the Teachers tab and assign subjects/divisions to your teachers before generating the timetable.")
     
     generator = TimetableGenerator(
         teachers=teachers,
@@ -116,9 +119,14 @@ def get_timetable(
     current_user: User = Depends(get_current_user)
 ):
     academic_year_id = resolve_academic_year(db, current_user, academic_year_id)
-    slots = db.query(TimetableSlot).join(Teacher).join(Division).join(SchoolClass).filter(Teacher.school_id == current_user.school_id, 
-        SchoolClass.academic_year_id == academic_year_id
-    ).all()
+    slots = db.query(TimetableSlot)\
+        .join(Teacher, TimetableSlot.teacher_id == Teacher.id)\
+        .join(Division, TimetableSlot.division_id == Division.id)\
+        .join(SchoolClass, Division.class_id == SchoolClass.id)\
+        .filter(
+            Teacher.school_id == current_user.school_id, 
+            SchoolClass.academic_year_id == academic_year_id
+        ).all()
     
     return [
         {
