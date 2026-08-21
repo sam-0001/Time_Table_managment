@@ -24,7 +24,7 @@ def generate_timetable(
     # 1. Fetch constraints and data
     academic_year_id = resolve_academic_year(db, current_user, academic_year_id)
     
-    if current_user.school.plan_type != "DEMO":
+    if current_user.school_plan != "DEMO":
         if current_user.school.available_generations <= 0 and current_user.email != "sc922467@gmail.com":
             raise HTTPException(status_code=403, detail="No generations left. Please buy more credits.")
             
