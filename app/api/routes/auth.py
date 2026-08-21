@@ -41,9 +41,9 @@ def register_school(user_in: SchoolRegisterCreate, db: Session = Depends(get_db)
     
     settings = SchoolSetting(
         school_id=school.id,
-        working_days=6 if plan == "DEMO" else 5,
-        number_of_periods=8 if plan == "DEMO" else 7,
-        max_weekly_teacher_periods=48 if plan == "DEMO" else 32
+        working_days=6 if school.plan_type == "DEMO" else 5,
+        number_of_periods=8 if school.plan_type == "DEMO" else 7,
+        max_weekly_teacher_periods=48 if school.plan_type == "DEMO" else 32
     )
     db.add(settings)
     
