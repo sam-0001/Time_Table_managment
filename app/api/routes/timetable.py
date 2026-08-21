@@ -8,6 +8,13 @@ from app.services.timetable_engine import TimetableGenerator
 
 router = APIRouter()
 
+def resolve_academic_year(db: Session, current_user, requested_id: str) -> str:
+    if requested_id == "temp-academic-year-id" or not requested_id:
+        from app.db.models import AcademicYear
+        ay = db.query(AcademicYear).filter(AcademicYear.school_id == current_user.school_id, AcademicYear.is_active == True).first()
+        if ay: return ay.id
+    return requested_id
+
 @router.post("/generate", status_code=status.HTTP_200_OK)
 def generate_timetable(
     academic_year_id: str,
@@ -15,6 +22,7 @@ def generate_timetable(
     current_user: User = Depends(require_roles([RoleEnum.SUPER_ADMIN, RoleEnum.SCHOOL_ADMIN, RoleEnum.PRINCIPAL, RoleEnum.TIMETABLE_COORDINATOR]))
 ):
     # 1. Fetch constraints and data
+    academic_year_id = resolve_academic_year(db, current_user, academic_year_id)
     school_setting = db.query(SchoolSetting).filter(SchoolSetting.school_id == current_user.school_id).first()
     if not school_setting:
         raise HTTPException(status_code=400, detail="School settings not found")
@@ -97,6 +105,7 @@ def get_timetable(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    academic_year_id = resolve_academic_year(db, current_user, academic_year_id)
     slots = db.query(TimetableSlot).join(Teacher).join(Division).join(SchoolClass).filter(Teacher.school_id == current_user.school_id, 
         SchoolClass.academic_year_id == academic_year_id
     ).all()

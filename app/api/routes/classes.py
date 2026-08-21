@@ -8,6 +8,13 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
+def resolve_academic_year(db: Session, current_user, requested_id: str) -> str:
+    if requested_id == "temp-academic-year-id" or not requested_id:
+        from app.db.models import AcademicYear
+        ay = db.query(AcademicYear).filter(AcademicYear.school_id == current_user.school_id, AcademicYear.is_active == True).first()
+        if ay: return ay.id
+    return requested_id
+
 class DivisionCreate(BaseModel):
     name: str
     class_teacher_id: Optional[str] = None
@@ -44,14 +51,14 @@ def create_class(
 ):
     school_class = db.query(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id, 
         SchoolClass.name == class_in.name, 
-        SchoolClass.academic_year_id == class_in.academic_year_id
+        SchoolClass.academic_year_id == resolve_academic_year(db, current_user, class_in.academic_year_id)
     ).first()
     
     if school_class:
         raise HTTPException(status_code=400, detail="Class with this name already exists for the academic year.")
         
     new_class = SchoolClass(
-        academic_year_id=class_in.academic_year_id,
+        academic_year_id=resolve_academic_year(db, current_user, class_in.academic_year_id),
         name=class_in.name,
         level=class_in.level
     )
@@ -80,6 +87,7 @@ def get_classes(
     current_user: User = Depends(get_current_user)
 ):
     query = db.query(SchoolClass).join(AcademicYear).filter(AcademicYear.school_id == current_user.school_id)
+    academic_year_id = resolve_academic_year(db, current_user, academic_year_id)
     if academic_year_id:
         query = query.filter(SchoolClass.academic_year_id == academic_year_id)
     return query.offset(skip).limit(limit).all()
