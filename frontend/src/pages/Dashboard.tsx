@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button'
 import { PaymentModal } from '@/components/PaymentModal'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-import { BookOpen, Users, CalendarDays, UserX, Loader2, Printer, Download } from 'lucide-react'
+import { BookOpen, Users, CalendarDays, UserX, Loader2, Printer, Download, PlayCircle, XCircle } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { api } from '@/lib/api'
 import { useClasses } from '@/hooks/useClasses'
 import { useTeachers } from '@/hooks/useTeachers'
 
@@ -22,6 +23,44 @@ export default function Dashboard() {
   const { data: classes } = useClasses(TEMP_ACADEMIC_YEAR_ID)
   const { data: teachers } = useTeachers()
   const navigate = useNavigate()
+
+  const [user, setUser] = useState<any>(null);
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
+  const [counts, setCounts] = useState({ teachers: 0, classes: 0 });
+
+  useEffect(() => {
+    api.get('/auth/me').then((res: any) => setUser(res.data)).catch(console.error);
+    api.get('/teachers/').then((res: any) => setCounts(prev => ({ ...prev, teachers: res.data.length }))).catch(console.error);
+    const params = new URLSearchParams();
+    params.append('academic_year_id', 'temp-academic-year-id');
+    api.get(`/classes/?${params.toString()}`).then((res: any) => setCounts(prev => ({ ...prev, classes: res.data.length }))).catch(console.error);
+  }, []);
+
+  const handleEnterDemo = async () => {
+    setIsDemoLoading(true);
+    try {
+      const res = await api.post('/auth/enter-demo');
+      localStorage.setItem('access_token', res.data.access_token);
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to enter demo mode');
+      setIsDemoLoading(false);
+    }
+  };
+
+  const handleExitDemo = async () => {
+    setIsDemoLoading(true);
+    try {
+      const res = await api.post('/auth/exit-demo');
+      localStorage.setItem('access_token', res.data.access_token);
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to exit demo mode');
+      setIsDemoLoading(false);
+    }
+  };
 
   const [viewMode, setViewMode] = useState<'division' | 'teacher' | 'master'>('division')
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
@@ -180,6 +219,17 @@ export default function Dashboard() {
             <p className="text-slate-500 mt-1">Overview of your school's scheduling metrics.</p>
           </div>
           <div className="flex gap-2">
+            {user?.is_demo_mode ? (
+              <Button variant="destructive" onClick={handleExitDemo} disabled={isDemoLoading}>
+                {isDemoLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
+                Exit Demo Sandbox
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={handleEnterDemo} disabled={isDemoLoading} className="text-amber-600 border-amber-600 hover:bg-amber-50">
+                {isDemoLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlayCircle className="mr-2 h-4 w-4" />}
+                Try Demo Sandbox
+              </Button>
+            )}
             <Button variant="outline" onClick={() => navigate('/leaves')}>Mark Leave</Button>
             <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleGenerate} disabled={isGenerating}>
               {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CalendarDays className="mr-2 h-4 w-4" />}
@@ -195,7 +245,7 @@ export default function Dashboard() {
               <Users className="h-4 w-4 text-slate-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">Manage via Teachers</div>
+              <div className="text-2xl font-bold">{counts.teachers}</div>
             </CardContent>
           </Card>
           
@@ -205,7 +255,7 @@ export default function Dashboard() {
               <BookOpen className="h-4 w-4 text-slate-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">Manage via Classes</div>
+              <div className="text-2xl font-bold">{counts.classes}</div>
             </CardContent>
           </Card>
           

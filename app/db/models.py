@@ -35,6 +35,22 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     school_id = Column(String, ForeignKey("schools.id", ondelete="CASCADE"), nullable=True)
 
+    @property
+    def school_plan(self):
+        if self.is_demo_mode:
+            return "DEMO"
+        return self.school.plan_type if self.school else None
+        
+    _is_demo_mode = False
+    
+    @property
+    def is_demo_mode(self):
+        return getattr(self, "_is_demo_mode", False)
+        
+    @is_demo_mode.setter
+    def is_demo_mode(self, value):
+        self._is_demo_mode = value
+
     # Relationships
     teacher_profile = relationship("Teacher", back_populates="user", uselist=False, cascade="all, delete-orphan")
     school = relationship("School", back_populates="users")
@@ -117,6 +133,22 @@ class Teacher(Base):
     is_active = Column(Boolean, default=True)
     is_demo = Column(Boolean, default=False)
     school_id = Column(String, ForeignKey("schools.id", ondelete="CASCADE"), nullable=True)
+
+    @property
+    def school_plan(self):
+        if self.is_demo_mode:
+            return "DEMO"
+        return self.school.plan_type if self.school else None
+        
+    _is_demo_mode = False
+    
+    @property
+    def is_demo_mode(self):
+        return getattr(self, "_is_demo_mode", False)
+        
+    @is_demo_mode.setter
+    def is_demo_mode(self, value):
+        self._is_demo_mode = value
 
     # Relationships
     user = relationship("User", back_populates="teacher_profile")

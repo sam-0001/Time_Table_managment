@@ -42,7 +42,7 @@ def generate_demo_data(db: Session, school_id: str, academic_year_id: str):
         teacher = Teacher(
             id=t_id,
             school_id=school_id,
-            employee_id=f"DEMO-{subj_code}",
+            employee_id=f"DEMO-{subj_code}-{school_id[:8]}",
             max_daily_periods=8,
             max_weekly_periods=40,
             is_active=True,

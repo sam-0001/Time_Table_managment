@@ -23,6 +23,11 @@ def generate_timetable(
 ):
     # 1. Fetch constraints and data
     academic_year_id = resolve_academic_year(db, current_user, academic_year_id)
+    
+    if current_user.school.plan_type != "DEMO":
+        if current_user.school.available_generations <= 0 and current_user.email != "sc922467@gmail.com":
+            raise HTTPException(status_code=403, detail="No generations left. Please buy more credits.")
+            
     school_setting = db.query(SchoolSetting).filter(SchoolSetting.school_id == current_user.school_id).first()
     if not school_setting:
         raise HTTPException(status_code=400, detail="School settings not found")
@@ -77,6 +82,9 @@ def generate_timetable(
     
     result = generator.generate()
     if result["status"] == "SUCCESS":
+        if current_user.school.plan_type != "DEMO" and current_user.email != "sc922467@gmail.com":
+            current_user.school.available_generations -= 1
+            
         # Clear old slots for this academic year
         teacher_ids = [t.id for t in db.query(Teacher.id).filter(Teacher.school_id == current_user.school_id).all()]
         db.query(TimetableSlot).filter(

@@ -30,6 +30,22 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
         raise credentials_exception
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+
+    # Handle demo mode token overrides
+    is_demo_mode = payload.get("is_demo_mode", False)
+    token_school_id = payload.get("school_id")
+    real_school_id = payload.get("real_school_id")
+    
+    if is_demo_mode and token_school_id:
+        _ = user.school # trigger lazy load before expunging
+        db.expunge(user)
+        user.real_school_id = user.school_id # Store original
+        user.school_id = token_school_id
+        user.is_demo_mode = True
+    else:
+        user.is_demo_mode = False
+        user.real_school_id = user.school_id
+
     return user
 
 def get_current_active_superuser(current_user: User = Depends(get_current_user)) -> User:
