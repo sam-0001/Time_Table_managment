@@ -11,10 +11,13 @@ import { Loader2, Plus, Search, Trash2, Edit, Download, Upload, Eye, BookOpen, U
 import { api } from '@/lib/api'
 
 import { useClasses } from '@/hooks/useClasses'
+import { useSettings } from '@/hooks/useSettings'
+
 export default function TeachersPage() {
   const { data: teachers, isLoading, refetch } = useTeachers()
   const { data: subjects } = useSubjects()
   const { data: classes } = useClasses('temp-academic-year-id')
+  const { data: settings } = useSettings()
   const { mutateAsync: createTeacher, isPending: isCreating } = useCreateTeacher()
   const { mutateAsync: updateTeacher, isPending: isUpdating } = useUpdateTeacher()
   const { mutateAsync: deleteTeacher } = useDeleteTeacher()
@@ -32,7 +35,7 @@ export default function TeachersPage() {
     mobile: '',
     qualification: '',
     assignments: [] as {subject_id: string, division_id: string}[],
-    max_weekly_periods: 32,
+    max_weekly_periods: settings?.max_weekly_teacher_periods || 32,
     max_daily_periods: 7,
     class_teacher_of_division_id: null as string | null
   })
@@ -53,7 +56,7 @@ export default function TeachersPage() {
       }
       setIsOpen(false)
       setEditingId(null)
-      setFormData({ name: '', email: '', employee_id: '', mobile: '', qualification: '', assignments: [], max_weekly_periods: 32, max_daily_periods: 7, class_teacher_of_division_id: null })
+      setFormData({ name: '', email: '', employee_id: '', mobile: '', qualification: '', assignments: [], max_weekly_periods: settings?.max_weekly_teacher_periods || 32, max_daily_periods: 7, class_teacher_of_division_id: null })
     } catch (error: any) {
       if (error.response?.data?.detail) {
         const detail = error.response.data.detail;
@@ -155,7 +158,7 @@ export default function TeachersPage() {
             <DialogTrigger render={
               <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => {
                 setEditingId(null)
-                setFormData({ name: '', email: '', employee_id: '', mobile: '', qualification: '', assignments: [], max_weekly_periods: 32, max_daily_periods: 7, class_teacher_of_division_id: null })
+                setFormData({ name: '', email: '', employee_id: '', mobile: '', qualification: '', assignments: [], max_weekly_periods: settings?.max_weekly_teacher_periods || 32, max_daily_periods: 7, class_teacher_of_division_id: null })
               }}>
                 <Plus className="mr-2 h-4 w-4" /> Add Teacher
               </Button>

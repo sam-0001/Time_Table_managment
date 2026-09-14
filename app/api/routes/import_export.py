@@ -21,11 +21,16 @@ async def import_teachers(
     try:
         contents = await file.read()
         df = pd.read_excel(io.BytesIO(contents))
+        df = df.fillna('')
         
         # Expected columns: employee_id, user_id, mobile, qualification, max_weekly_periods, max_daily_periods
         required_cols = {'employee_id', 'user_id'}
         if not required_cols.issubset(df.columns):
             raise HTTPException(status_code=400, detail=f"Missing required columns. Found: {list(df.columns)}")
+        
+        from app.db.models import SchoolSetting
+        settings = db.query(SchoolSetting).first()
+        default_max_weekly = settings.max_weekly_teacher_periods if settings else 32
         
         added = 0
         for _, row in df.iterrows():
@@ -36,10 +41,18 @@ async def import_teachers(
                     employee_id=str(row['employee_id']),
                     mobile=str(row.get('mobile', '')),
                     qualification=str(row.get('qualification', '')),
-                    max_weekly_periods=int(row.get('max_weekly_periods', 32)),
-                    max_daily_periods=int(row.get('max_daily_periods', 7))
+                    max_weekly_periods=int(row.get('max_weekly_periods') or default_max_weekly),
+                    max_daily_periods=int(row.get('max_daily_periods') or 7)
                 )
                 db.add(new_teacher)
+                added += 1
+            else:
+                teacher.mobile = str(row.get('mobile', ''))
+                teacher.qualification = str(row.get('qualification', ''))
+                if 'max_weekly_periods' in row and row['max_weekly_periods'] != '':
+                    teacher.max_weekly_periods = int(row['max_weekly_periods'])
+                if 'max_daily_periods' in row and row['max_daily_periods'] != '':
+                    teacher.max_daily_periods = int(row['max_daily_periods'])
                 added += 1
         
         db.commit()

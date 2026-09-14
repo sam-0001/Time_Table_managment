@@ -144,9 +144,21 @@ def update_school_settings(settings_in: SchoolSettingsUpdate, db: Session = Depe
         raise HTTPException(status_code=404, detail="Settings not found")
     
     update_data = settings_in.model_dump(exclude_unset=True)
+    
+    old_max_weekly = settings.max_weekly_teacher_periods
+    
     for field, value in update_data.items():
         setattr(settings, field, value)
         
+    if 'max_weekly_teacher_periods' in update_data and old_max_weekly != update_data['max_weekly_teacher_periods']:
+        from app.db.models import Teacher
+        teachers = db.query(Teacher).filter(
+            Teacher.school_id == current_user.school_id,
+            Teacher.max_weekly_periods == old_max_weekly
+        ).all()
+        for t in teachers:
+            t.max_weekly_periods = update_data['max_weekly_teacher_periods']
+            
     db.commit()
     db.refresh(settings)
     return settings

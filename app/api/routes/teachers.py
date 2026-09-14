@@ -132,6 +132,8 @@ def create_teacher(
         "class_teacher_of_division_id": new_teacher.class_teacher_of.id if new_teacher.class_teacher_of else None
     }
 
+from sqlalchemy.orm import joinedload
+
 @router.get("/", response_model=List[TeacherResponse])
 def get_teachers(
     skip: int = 0, 
@@ -140,7 +142,11 @@ def get_teachers(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    query = db.query(Teacher).filter(Teacher.school_id == current_user.school_id)
+    query = db.query(Teacher).options(
+        joinedload(Teacher.user),
+        joinedload(Teacher.subjects),
+        joinedload(Teacher.class_teacher_of)
+    ).filter(Teacher.school_id == current_user.school_id)
     if search:
         query = query.filter(Teacher.employee_id.ilike(f"%{search}%"))
     teachers = query.offset(skip).limit(limit).all()
