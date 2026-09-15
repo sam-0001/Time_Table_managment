@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import auth, school, teachers, subjects, classes, timetable, leaves, import_export, payments, students, parents
+from app.api.routes import auth, school, teachers, subjects, classes, timetable, leaves, import_export, payments, students, parents, attendance
 
 app = FastAPI(
     title="School Timetable Management System API",
@@ -34,6 +34,7 @@ app.include_router(import_export.router, prefix="/api/import-export", tags=["imp
 app.include_router(payments.router, prefix="/api/payments", tags=["payments"])
 app.include_router(students.router, prefix="/api/students", tags=["students"])
 app.include_router(parents.router, prefix="/api/parents", tags=["parents"])
+app.include_router(attendance.router, prefix="/api/attendance", tags=["attendance"])
 
 
 from sqlalchemy import text

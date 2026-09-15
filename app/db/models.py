@@ -325,3 +325,20 @@ class Student(Base):
     school = relationship("School")
     parent = relationship("Parent", back_populates="students")
     division = relationship("Division", back_populates="students")
+
+
+class Attendance(Base):
+    __tablename__ = "attendances"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    school_id = Column(String, ForeignKey("schools.id", ondelete="CASCADE"))
+    student_id = Column(String, ForeignKey("students.id", ondelete="CASCADE"))
+    division_id = Column(String, ForeignKey("divisions.id", ondelete="CASCADE"))
+    recorded_by_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    
+    date = Column(DateTime, nullable=False)
+    status = Column(String, default="PRESENT") # PRESENT, ABSENT, LATE, HALF_DAY
+    remarks = Column(String, nullable=True)
+    
+    student = relationship("Student")
+    division = relationship("Division")
+    recorded_by = relationship("User")
