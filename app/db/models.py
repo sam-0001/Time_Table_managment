@@ -370,3 +370,16 @@ class ExamResult(Base):
     
     exam = relationship("Exam", back_populates="results")
     student = relationship("Student")
+
+
+class Announcement(Base):
+    __tablename__ = "announcements"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    school_id = Column(String, ForeignKey("schools.id", ondelete="CASCADE"))
+    division_id = Column(String, ForeignKey("divisions.id", ondelete="CASCADE"), nullable=True)
+    
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=False)
+    date = Column(DateTime, nullable=False, default=datetime.utcnow)
+    
+    division = relationship("Division")

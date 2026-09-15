@@ -10,6 +10,7 @@ import StudentsPage from './pages/Students'
 import ParentsPage from './pages/Parents'
 import AttendancePage from './pages/Attendance'
 import ExamsPage from './pages/Exams'
+import AnnouncementsPage from './pages/Announcements'
 import SubjectsPage from './pages/Subjects'
 import ClassesPage from './pages/Classes'
 import LeavesPage from './pages/Leaves'
@@ -70,6 +71,7 @@ function App() {
           <Route path="/parents" element={<AppLayout><ParentsPage /></AppLayout>} />
           <Route path="/attendance" element={<AppLayout><AttendancePage /></AppLayout>} />
           <Route path="/exams" element={<AppLayout><ExamsPage /></AppLayout>} />
+          <Route path="/notice-board" element={<AppLayout><AnnouncementsPage /></AppLayout>} />
           <Route path="/leaves" element={<AppLayout><LeavesPage /></AppLayout>} />
           <Route path="/settings" element={<AppLayout><SettingsPage /></AppLayout>} />
           <Route path="/profile" element={<AppLayout><Profile /></AppLayout>} />
