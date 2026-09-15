@@ -23,6 +23,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { name: 'Students', href: '/students', icon: Users },
     { name: 'Parents', href: '/parents', icon: Users },
     { name: 'Attendance', href: '/attendance', icon: BookOpen },
+    { name: 'Exams & Grades', href: '/exams', icon: Layers },
     { name: 'Leaves & Arr.', href: '/leaves', icon: CalendarRange },
     { name: 'Settings', href: '/settings', icon: Settings },
   ]

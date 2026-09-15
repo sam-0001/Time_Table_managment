@@ -342,3 +342,31 @@ class Attendance(Base):
     student = relationship("Student")
     division = relationship("Division")
     recorded_by = relationship("User")
+
+
+class Exam(Base):
+    __tablename__ = "exams"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    school_id = Column(String, ForeignKey("schools.id", ondelete="CASCADE"))
+    division_id = Column(String, ForeignKey("divisions.id", ondelete="CASCADE"))
+    subject_id = Column(String, ForeignKey("subjects.id", ondelete="CASCADE"))
+    
+    name = Column(String, nullable=False)
+    date = Column(DateTime, nullable=False)
+    max_marks = Column(Float, default=100.0)
+    
+    division = relationship("Division")
+    subject = relationship("Subject")
+    results = relationship("ExamResult", back_populates="exam", cascade="all, delete-orphan")
+
+class ExamResult(Base):
+    __tablename__ = "exam_results"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    exam_id = Column(String, ForeignKey("exams.id", ondelete="CASCADE"))
+    student_id = Column(String, ForeignKey("students.id", ondelete="CASCADE"))
+    
+    score = Column(Float, nullable=True)
+    remarks = Column(String, nullable=True)
+    
+    exam = relationship("Exam", back_populates="results")
+    student = relationship("Student")
