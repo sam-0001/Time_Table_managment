@@ -20,6 +20,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { name: 'Teachers', href: '/teachers', icon: Users },
     { name: 'Subjects', href: '/subjects', icon: BookOpen },
     { name: 'Classes', href: '/classes', icon: Layers },
+    { name: 'Students', href: '/students', icon: Users },
+    { name: 'Parents', href: '/parents', icon: Users },
     { name: 'Leaves & Arr.', href: '/leaves', icon: CalendarRange },
     { name: 'Settings', href: '/settings', icon: Settings },
   ]

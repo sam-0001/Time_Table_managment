@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import auth, school, teachers, subjects, classes, timetable, leaves, import_export, payments
+from app.api.routes import auth, school, teachers, subjects, classes, timetable, leaves, import_export, payments, students, parents
 
 app = FastAPI(
     title="School Timetable Management System API",
@@ -32,6 +32,8 @@ app.include_router(timetable.router, prefix="/api/timetable", tags=["timetable"]
 app.include_router(leaves.router, prefix="/api/leaves", tags=["leaves"])
 app.include_router(import_export.router, prefix="/api/import-export", tags=["import-export"])
 app.include_router(payments.router, prefix="/api/payments", tags=["payments"])
+app.include_router(students.router, prefix="/api/students", tags=["students"])
+app.include_router(parents.router, prefix="/api/parents", tags=["parents"])
 
 
 from sqlalchemy import text
@@ -58,6 +60,41 @@ def run_startup_migrations():
             db.execute(text("ALTER TABLE schools ADD COLUMN IF NOT EXISTS available_generations INTEGER DEFAULT 0"))
             db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_demo BOOLEAN DEFAULT FALSE"))
             db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR"))
+
+            # Add roles if Postgres
+            try:
+                db.execute(text("ALTER TYPE roleenum ADD VALUE IF NOT EXISTS 'STUDENT'"))
+                db.execute(text("ALTER TYPE roleenum ADD VALUE IF NOT EXISTS 'PARENT'"))
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                pass # might fail if not postgres or already exists or transaction issue
+                
+            db.execute(text('''
+                CREATE TABLE IF NOT EXISTS parents (
+                    id VARCHAR PRIMARY KEY,
+                    user_id VARCHAR UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+                    school_id VARCHAR REFERENCES schools(id) ON DELETE CASCADE,
+                    phone VARCHAR,
+                    address VARCHAR,
+                    blood_group VARCHAR
+                )
+            '''))
+            db.execute(text('''
+                CREATE TABLE IF NOT EXISTS students (
+                    id VARCHAR PRIMARY KEY,
+                    user_id VARCHAR UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+                    school_id VARCHAR REFERENCES schools(id) ON DELETE CASCADE,
+                    parent_id VARCHAR REFERENCES parents(id) ON DELETE SET NULL,
+                    division_id VARCHAR REFERENCES divisions(id) ON DELETE SET NULL,
+                    admission_number VARCHAR,
+                    gender VARCHAR,
+                    date_of_birth TIMESTAMP,
+                    blood_group VARCHAR,
+                    address VARCHAR
+                )
+            '''))
+
             db.execute(text("ALTER TABLE teachers ADD COLUMN IF NOT EXISTS is_demo BOOLEAN DEFAULT FALSE"))
             db.execute(text("ALTER TABLE classes ADD COLUMN IF NOT EXISTS is_demo BOOLEAN DEFAULT FALSE"))
             db.execute(text("ALTER TABLE subjects ADD COLUMN IF NOT EXISTS is_demo BOOLEAN DEFAULT FALSE"))

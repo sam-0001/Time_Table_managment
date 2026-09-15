@@ -6,6 +6,8 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import TeachersPage from './pages/Teachers'
+import StudentsPage from './pages/Students'
+import ParentsPage from './pages/Parents'
 import SubjectsPage from './pages/Subjects'
 import ClassesPage from './pages/Classes'
 import LeavesPage from './pages/Leaves'
@@ -62,6 +64,8 @@ function App() {
           <Route path="/teachers" element={<AppLayout><TeachersPage /></AppLayout>} />
           <Route path="/subjects" element={<AppLayout><SubjectsPage /></AppLayout>} />
           <Route path="/classes" element={<AppLayout><ClassesPage /></AppLayout>} />
+          <Route path="/students" element={<AppLayout><StudentsPage /></AppLayout>} />
+          <Route path="/parents" element={<AppLayout><ParentsPage /></AppLayout>} />
           <Route path="/leaves" element={<AppLayout><LeavesPage /></AppLayout>} />
           <Route path="/settings" element={<AppLayout><SettingsPage /></AppLayout>} />
           <Route path="/profile" element={<AppLayout><Profile /></AppLayout>} />
